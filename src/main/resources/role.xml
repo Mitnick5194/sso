@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<roles>
+	<role id="0x1000" name="su" desc="超级用户" />
+	<role id="0x1001" name="su" desc="管理员">
+		<menus>
+			<value>0x01</value>
+			<value>0x02</value>
+			<value>0x03</value>
+			<value>0x04</value>
+			<value>0x05</value>
+			<value>0x07</value>
+		</menus>
+	</role>
+
+	<role id="0x101" name="loginer" desc="登录者">
+		<menus>
+			<value>0x02</value>
+			<value>0x03</value>
+			<value>0x04</value>
+			<value>0x05</value>
+			<value>0x07</value>
+		</menus>
+	</role>
+	<role id="0x102" name="passager" desc="游客">
+		<menus>
+			<value>0x02</value>
+			<value>0x03</value>
+			<value>0x04</value>
+			<value>0x05</value>
+			<value>0x07</value>
+		</menus>
+	</role>
+
+</roles>

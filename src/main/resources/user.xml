@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<users>
+	<user id="1" name="ajie" password="ajie">
+		<property name="email" value="1149023676@qq.com" />
+		<property name="roles">
+			<value>0x1000</value>
+		</property>
+	</user>
+	<user id="2" name="mitnick" password="ajie">
+		<property name="email" value="1149023676@qq.com" />
+		<property name="roles">
+			<value>0x101</value>
+			<value>0x102</value>
+		</property>
+	</user>
+	<user id="3" name="独孤怎会求败" password="ajie">
+		<property name="email" value="1149023676@qq.com" />
+		<property name="roles">
+			<value>0x101</value>
+			<value>0x102</value>
+		</property>
+	</user>
+</users>

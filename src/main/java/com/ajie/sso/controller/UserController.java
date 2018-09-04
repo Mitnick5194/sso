@@ -2,6 +2,7 @@ package com.ajie.sso.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -32,24 +33,42 @@ public class UserController {
 	}
 
 	@RequestMapping
-	void getUser( HttpServletRequest request, HttpServletResponse response) throws IOException {
+	void getUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
-		//XmlUser5016237640858808320000378nufpoqdbsqvqslv11535795540430979
+		// XmlUser5016237640858808320000378nufpoqdbsqvqslv11535795540430979
 		String id = request.getParameter("id");
 		User user = null;
 		try {
+			List<User> users = userService.getXmlUsers();
+			if (users.size() > 0) {
+				for (User u : users) {
+					logger.info(u.getOuterId());
+				}
+			}
 			user = userService.getUserById(id);
 		} catch (UserException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("获取用户失败:", e);
 		}
-		JSONObject json= new JSONObject();
-		if(null != user){
-			json.put("name" , user.getName());
+		JSONObject json = new JSONObject();
+		if (null != user) {
+			json.put("name", user.getName());
 			json.put("email", user.getEmail());
 		}
-		out.print("<h1>"+json.toString()+"</h1>");
+		out.print("<h1>" + json.toString() + "</h1>");
+	}
+
+	String login(HttpServletRequest request, HttpServletResponse response) {
+		String content = request.getParameter("name");
+		String password = request.getParameter("password");
+		String ref = request.getParameter("ref");
+		try {
+			User user = userService.login(content, password);
+		} catch (UserException e) {
+			// TODO: handle exception
+		}
+		return null;
+
 	}
 	/*	@RequestMapping
 	void nav(HttpServletRequest request, HttpServletResponse response) throws IOException {

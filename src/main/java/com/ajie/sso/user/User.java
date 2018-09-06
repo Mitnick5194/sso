@@ -102,7 +102,7 @@ public interface User {
 	 * @param identifyingCode
 	 *            邮箱验证码
 	 * @param newPhone
-	 * @throws UserException 
+	 * @throws UserException
 	 */
 	boolean setPhone(String identifyingCode, String newPhone) throws UserException;
 
@@ -124,13 +124,6 @@ public interface User {
 	 * @return
 	 */
 	Date getCreateTime();
-
-	/**
-	 * 最后活跃时间
-	 * 
-	 * @return
-	 */
-	Date getLastActive();
 
 	/**
 	 * 登录token
@@ -191,6 +184,14 @@ public interface User {
 	 * @return
 	 */
 	boolean checkRole(int roleId);
+
+	/**
+	 * 用户是否有权限访问指定的url
+	 * 
+	 * @param url
+	 * @return
+	 */
+	boolean checkRoleForUrl(String url);
 
 	/**
 	 * 移除权限
@@ -291,11 +292,11 @@ public interface User {
 	void updateLastActive();
 
 	/**
-	 * 获取最后活跃时间
+	 * 最后活跃时间
 	 * 
 	 * @return
 	 */
-	Date getUpdateLastActive();
+	Date getLastActive();
 
 	/**
 	 * 登出
@@ -303,11 +304,11 @@ public interface User {
 	void logout();
 
 	/**
-	 * 包装user pojo
+	 * 将user转换成pojo，操作数据库时需要
 	 * 
 	 * @param tbUser
 	 * @return
 	 */
-	User valueOf(TbUser tbUser);
+	TbUser toPojo();
 
 }

@@ -37,27 +37,7 @@ public class XmlUser extends AbstractUser {
 		return password.equals(this.password);
 	}
 
-	@Override
-	public boolean checkRole(Role role) {
-		if (null == role) {
-			return false;
-		}
-		return checkRole(role.getId());
-	}
-
-	@Override
-	public boolean checkRole(int roleId) {
-		List<Role> roles = getRoles();
-		for (Role r : roles) {
-			if (null == r) {
-				return false;
-			}
-			if (roleId == r.getId()) {
-				return true;
-			}
-		}
-		return false;
-	}
+	
 
 	@Override
 	public List<Role> getRoles() {

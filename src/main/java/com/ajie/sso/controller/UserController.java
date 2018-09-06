@@ -88,17 +88,26 @@ public class UserController {
 	 * 
 	 * @param request
 	 * @param response
+	 * @throws IOException
 	 */
 	@RequestMapping("user/checkRoleForUrl.do")
-	void checkRoleForUrl(HttpServletRequest request, HttpServletResponse response) {
+	void checkRoleForUrl(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		setAjaxContentType(response);
+		PrintWriter out = response.getWriter();
 		String userId = request.getParameter("id");
 		String url = request.getParameter("url");
+		ResponseResult ret = null;
 		try {
 			User user = userService.getUserById(userId);
-			List<Role> roles = user.getRoles();
+			boolean hasRole = user.checkRoleForUrl(url);
+			ret = ResponseResult.newResult(ResponseResult.CODE_SUC, hasRole);
 		} catch (UserException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);
+		} finally {
+			out.print(JsonUtil.toJSONString(ret));
+			out.flush();
+			out.close();
 		}
 
 	}

@@ -6,6 +6,7 @@ import java.util.List;
 import com.ajie.chilli.support.AbstractOuterIdSupport;
 import com.ajie.chilli.support.service.ServiceSupport;
 import com.ajie.pojo.TbUser;
+import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserServiceExt;
@@ -271,16 +272,45 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 
 	}
 
+	public abstract List<Role> getRoles();
+
 	@Override
-	public Date getUpdateLastActive() {
-		// TODO Auto-generated method stub
-		return null;
+	public boolean checkRole(Role role) {
+		if (null == role) {
+			return false;
+		}
+		return checkRole(role.getId());
 	}
 
 	@Override
-	public User valueOf(TbUser tbUser) {
-		// TODO Auto-generated method stub
-		return null;
+	public boolean checkRole(int roleId) {
+		List<Role> roles = getRoles();
+		for (Role r : roles) {
+			if (null == r) {
+				return false;
+			}
+			if (roleId == r.getId()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean checkRoleForUrl(String url) {
+		if (null == url) {
+			return false;
+		}
+		List<Role> rs = getRoles();
+		UserServiceExt service = getService();
+		Menu menu = service.getMenuByUri(url);
+		for (Role r : rs) {
+			List<Menu> m = r.getMenus();
+			if (m.contains(menu)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public OuterId getOuterIdInstance() {

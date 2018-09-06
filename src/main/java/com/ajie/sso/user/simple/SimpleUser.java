@@ -283,6 +283,7 @@ public class SimpleUser extends AbstractUser {
 			return roles;
 		}
 		roles = new ArrayList<Role>();
+		// 保存roleId是以字符串格式保存，所以需要切割
 		List<Integer> roleIds = splitRoleIds();
 		synchronized (roles) {
 			List<Role> roleTable = getService().getRoles();
@@ -353,24 +354,6 @@ public class SimpleUser extends AbstractUser {
 
 	public boolean isMark(int mark) {
 		return mark == (mark & this.mark);
-	}
-
-	@Override
-	public boolean checkRole(Role role) {
-		if (null == role) {
-			return false;
-		}
-		return checkRole(role.getId());
-	}
-
-	@Override
-	public boolean checkRole(int roleId) {
-		for (Role r : roles) {
-			if (r.getId() == roleId) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	@Override

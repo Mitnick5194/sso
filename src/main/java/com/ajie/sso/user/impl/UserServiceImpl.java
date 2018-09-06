@@ -329,4 +329,12 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public Menu getMenuByUri(String uri) {
+		if (StringUtil.isEmpty(uri)) {
+			return null;
+		}
+		return navigatorService.getMenuByUri(uri);
+	}
 }

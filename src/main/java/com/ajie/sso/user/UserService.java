@@ -17,7 +17,7 @@ public interface UserService {
 	 * @return
 	 */
 	List<User> getUsers();
-	
+
 	List<User> getXmlUsers();
 
 	/**
@@ -46,7 +46,7 @@ public interface UserService {
 	 * 
 	 * @param outerId
 	 * @return
-	 * @throws UserException 
+	 * @throws UserException
 	 */
 	User getUserById(String outerId) throws UserException;
 
@@ -65,5 +65,7 @@ public interface UserService {
 	 * @return
 	 */
 	User getUserByName(String name);
+
+	
 
 }

@@ -8,18 +8,21 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ajie.chilli.utils.Toolkits;
+import com.ajie.chilli.utils.common.StringUtil;
+import com.ajie.pojo.TbUser;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;
+import com.ajie.sso.user.UserServiceExt;
 import com.ajie.sso.user.enums.SexEnum;
 import com.ajie.sso.user.exception.UserException;
-import com.ajie.utils.Toolkits;
-import com.ajie.utils.common.StringUtil;
 
 /**
  * @author niezhenjie
  */
 public class SimpleUser extends AbstractUser {
 	private static final Logger logger = LoggerFactory.getLogger(SimpleUser.class);
+
 	/*
 	 * MD5密码
 	 */
@@ -58,8 +61,25 @@ public class SimpleUser extends AbstractUser {
 	 */
 	protected int mark;
 
-	public SimpleUser() {
+	public SimpleUser(UserServiceExt service) {
+		super(service);
+	}
 
+	public SimpleUser(UserServiceExt service, TbUser pojo) {
+		super(service);
+		this.id = pojo.getId();
+		this.name = pojo.getName();
+		this.email = pojo.getName();
+		this.createTime = pojo.getCreatetime();
+		this.password = pojo.getPassword();
+		this.header = pojo.getHeader();
+		this.lastActive = pojo.getLastactive();
+		this.mark = pojo.getMark();
+		this.nickName = pojo.getNickname();
+		this.phone = pojo.getPassword();
+		this.roleIdStr = pojo.getRoleids();
+		this.sex = Integer.valueOf(pojo.getSex());
+		this.synopsis = pojo.getSynopsis();
 	}
 
 	/**
@@ -70,7 +90,9 @@ public class SimpleUser extends AbstractUser {
 	 * @param password
 	 * @throws UserException
 	 */
-	public SimpleUser(String name, String email, String password) throws UserException {
+	public SimpleUser(UserServiceExt service, String name, String email, String password)
+			throws UserException {
+		super(service);
 		if (null == name) {
 			throw new UserException("用户名不能为空");
 		}
@@ -89,7 +111,9 @@ public class SimpleUser extends AbstractUser {
 
 	}
 
-	public SimpleUser(int id, String name, String email, String password) throws UserException {
+	public SimpleUser(UserServiceExt service, int id, String name, String email, String password)
+			throws UserException {
+		super(service);
 		if (0 >= id) {
 			throw new UserException("id不合法" + id);
 		}
@@ -111,17 +135,17 @@ public class SimpleUser extends AbstractUser {
 		roles = Collections.emptyList();
 	}
 
-	public SimpleUser(String name, String email, String password, String synopsis, int sex,
-			String phone) throws UserException {
-		this(name, email, password);
+	public SimpleUser(UserServiceExt service, String name, String email, String password,
+			String synopsis, int sex, String phone) throws UserException {
+		this(service, name, email, password);
 		this.synopsis = synopsis;
 		this.sex = sex;
 		this.phone = phone;
 	}
 
-	public SimpleUser(String name, String email, String password, List<Role> roles)
-			throws UserException {
-		this(name, email, password);
+	public SimpleUser(UserServiceExt service, String name, String email, String password,
+			List<Role> roles) throws UserException {
+		this(service, name, email, password);
 		this.roles = roles;
 	}
 
@@ -178,9 +202,25 @@ public class SimpleUser extends AbstractUser {
 	}
 
 	@Override
-	public boolean setPhone(String vertifycode, String phone) {
-		// TODO
-		return false;
+	public boolean setPhone(String vertifycode, String newphone) throws UserException {
+		if (StringUtil.isEmpty(vertifycode)) {
+			throw new UserException("验证码不能为空");
+		}
+		if (StringUtil.isEmpty(newphone)) {
+			throw new UserException("手机号码不能为空");
+		}
+		if (StringUtil.eq(phone, newphone)) {
+			throw new UserException("新手机号码不能和原来的一样");
+		}
+		String vcode = getService().getVertifycode(this);
+		if (StringUtil.isEmpty(vcode)) {
+			throw new UserException("验证码无效，请从新获取");
+		}
+		if (!StringUtil.eq(vertifycode, vcode)) {
+			throw new UserException("验证码错误");
+		}
+		phone = newphone;
+		return true;
 	}
 
 	@Override
@@ -245,7 +285,7 @@ public class SimpleUser extends AbstractUser {
 		roles = new ArrayList<Role>();
 		List<Integer> roleIds = splitRoleIds();
 		synchronized (roles) {
-			List<Role> roleTable = Role.roleTable;
+			List<Role> roleTable = getService().getRoles();
 			for (int roleId : roleIds) {
 				for (Role role : roleTable) {
 					if (roleId == role.getId()) {
@@ -348,6 +388,25 @@ public class SimpleUser extends AbstractUser {
 			throw new UserException("密码不能为空");
 		}
 		return Toolkits.md5Password(this.password).equals(Toolkits.md5Password(password));
+	}
+
+	@Override
+	public TbUser toPojo() {
+		TbUser tbUser = new TbUser();
+		tbUser.setId(this.id);
+		tbUser.setName(this.name);
+		tbUser.setPassword(this.password);
+		tbUser.setNickname(this.nickName);
+		tbUser.setSynopsis(this.synopsis);
+		tbUser.setSex(String.valueOf(this.sex));
+		tbUser.setPhone(this.phone);
+		tbUser.setEmail(this.email);
+		tbUser.setCreatetime(this.createTime);
+		tbUser.setLastactive(this.lastActive);
+		tbUser.setRoleids(this.roleIdStr);
+		tbUser.setHeader(this.header);
+		tbUser.setMark(this.mark);
+		return tbUser;
 	}
 
 	public String toString() {

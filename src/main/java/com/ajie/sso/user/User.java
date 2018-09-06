@@ -102,8 +102,9 @@ public interface User {
 	 * @param identifyingCode
 	 *            邮箱验证码
 	 * @param newPhone
+	 * @throws UserException 
 	 */
-	boolean setPhone(String identifyingCode, String newPhone);
+	boolean setPhone(String identifyingCode, String newPhone) throws UserException;
 
 	/**
 	 * 用户邮箱

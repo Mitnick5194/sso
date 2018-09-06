@@ -10,12 +10,12 @@ import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ajie.chilli.utils.XmlHelper;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.navigator.simple.BaseMenu;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;
-import com.ajie.utils.XmlHelper;
 
 /**
  * @author niezhenjie
@@ -51,6 +51,7 @@ public class NavigatorMgrImpl implements NavigatorMgr {
 
 	@SuppressWarnings("unchecked")
 	protected void parse(Document doc) {
+		long start = System.currentTimeMillis();
 		List<Menu> navMenu = new ArrayList<Menu>();
 		Element root = doc.getRootElement();
 		Element menus = root.element("menus");
@@ -82,7 +83,8 @@ public class NavigatorMgrImpl implements NavigatorMgr {
 			navMenu.add(m);
 		}
 		this.menus = navMenu;
-		logger.info("已从配置文件中初始化导航条");
+		long end = System.currentTimeMillis();
+		logger.info("已从配置文件中初始化导航条，耗时 " + (end - start) + " ms");
 	}
 
 	@Override

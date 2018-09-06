@@ -11,6 +11,12 @@
 	<packaging>war</packaging>
 	<dependencies>
 		<!-- 日志处理 -->
+		<!-- https://mvnrepository.com/artifact/org.codehaus.jacdkson/jackson-core-asl -->
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-core-asl</artifactId>
+			<version>1.9.13</version>
+		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -111,6 +117,17 @@
 					<path>/</path>
 				</configuration>
 			</plugin>
+
+			<!-- 模块打jar包 -->
+	<!-- <plugin> <artifactId>maven-jar-plugin</artifactId> <executions> <execution> 
+		<id>user-module</id> <goals> <goal>jar</goal> </goals>打包的后缀 <phase>package</phase>life的多个阶段 
+		，预打包 <configuration> <outputDirectory>target/user</outputDirectory> <classifier>user-module</classifier> 
+		<includes>引入 路径 <include>**/user/**</include> <include>**/navigator/**</include> 
+		</includes> </configuration> </execution> <execution> <id>all</id> <goals> 
+		<goal>jar</goal> </goals> <phase>package</phase> <configuration> <classifier>all</classifier>***-all.jar 
+		<excludes>排除 <exclude>**/model/**</exclude> </excludes> <includes>引入 <include>**/impl/**</include> 
+		</includes> </configuration> </execution> </executions> </plugin> -->
+
 		</plugins>
 	</build>
 </project>

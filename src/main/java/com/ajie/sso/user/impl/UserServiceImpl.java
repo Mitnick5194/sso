@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.dom4j.Document;
@@ -11,27 +12,28 @@ import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ajie.chilli.support.OuterIdException;
+import com.ajie.chilli.support.OuterIdUtil;
+import com.ajie.chilli.utils.Toolkits;
+import com.ajie.chilli.utils.XmlHelper;
+import com.ajie.chilli.utils.common.ConstantPool;
+import com.ajie.chilli.utils.common.StringUtil;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserService;
+import com.ajie.sso.user.UserServiceExt;
 import com.ajie.sso.user.exception.UserException;
 import com.ajie.sso.user.simple.SimpleRole;
 import com.ajie.sso.user.simple.XmlUser;
-import com.ajie.support.OuterIdException;
-import com.ajie.support.OuterIdUtil;
-import com.ajie.utils.Toolkits;
-import com.ajie.utils.XmlHelper;
-import com.ajie.utils.common.ConstantPool;
-import com.ajie.utils.common.StringUtil;
 
 /**
  * 用户服务实现
  * 
  * @author niezhenjie
  */
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserServiceExt {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 	/**
 	 * 导航服务
@@ -51,12 +53,18 @@ public class UserServiceImpl implements UserService {
 	 */
 	protected List<User> xmlUserCache;
 
-	public List<User> getXmlUsers() {
-		return xmlUserCache;
-	}
+	/**
+	 * 所有的权限列表
+	 */
+	protected List<Role> roleDatas;
 
 	public UserServiceImpl() {
 		xmlUserCache = new ArrayList<User>();
+		roleDatas = new ArrayList<Role>();
+	}
+
+	public List<User> getXmlUsers() {
+		return xmlUserCache;
 	}
 
 	@Override
@@ -144,9 +152,10 @@ public class UserServiceImpl implements UserService {
 
 	@SuppressWarnings("unchecked")
 	protected synchronized void parseXmlUser(Document doc) {
+		long start = System.currentTimeMillis();
 		List<User> userList = new ArrayList<User>();
 		String setter = null;
-		List<Role> roleTable = Role.roleTable;
+		List<Role> roleTable = roleDatas;
 		try {
 			Element root = doc.getRootElement();
 			List<Element> users = root.elements("user");
@@ -155,7 +164,7 @@ public class UserServiceImpl implements UserService {
 				int id = Integer.valueOf(sid);
 				String username = ele.attributeValue("name");
 				String password = ele.attributeValue("password");
-				User user = new XmlUser(id, username, password);
+				User user = new XmlUser(this, id, username, password);
 				// userCache.put(id, user);
 				List<Element> propeties = ele.elements("property");
 				// 从配置中获取属性并通过setter设置进去
@@ -200,7 +209,8 @@ public class UserServiceImpl implements UserService {
 				userList.add(user);
 			}
 			this.xmlUserCache = userList;
-			logger.info("已从配置文件中初始化了用户数据");
+			long end = System.currentTimeMillis();
+			logger.info("已从配置文件中加载配置用户，耗时 " + (end - start) + " ms");
 		} catch (IllegalAccessException ex) {
 			logger.error("反射调用setter出错setter:" + setter + " , " + Toolkits.printTrace(ex));
 		} catch (IllegalArgumentException ex) {
@@ -260,7 +270,8 @@ public class UserServiceImpl implements UserService {
 
 	@SuppressWarnings("unchecked")
 	public synchronized void parseRoles(Document doc) {
-		List<Role> roles = Role.roleTable;
+		long start = System.currentTimeMillis();
+		List<Role> roles = this.roleDatas;
 		Element root = doc.getRootElement();
 		List<Element> rolesEle = root.elements("role");
 		for (Element ele : rolesEle) {
@@ -299,8 +310,23 @@ public class UserServiceImpl implements UserService {
 				menus.add(menu);
 			}
 		}
-		logger.info("已从配置文件中初始化了用户数据");
+		long end = System.currentTimeMillis();
+
+		logger.info("已从配置文件中初始化了用户数据 , 耗时 " + (end - start) + " ms");
 
 	}
 
+	@Override
+	public List<Role> getRoles() {
+		if (null == roleDatas) {
+			return Collections.emptyList();
+		}
+		return roleDatas;
+	}
+
+	@Override
+	public String getVertifycode(User user) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

@@ -1,6 +1,5 @@
 package com.ajie.sso.user;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.ajie.sso.navigator.Menu;
@@ -13,7 +12,6 @@ import com.ajie.sso.navigator.Menu;
  */
 public interface Role {
 
-	public static List<Role> roleTable = new ArrayList<Role>();
 
 	/**
 	 * 超级用户权限

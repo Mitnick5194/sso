@@ -3,12 +3,14 @@ package com.ajie.sso.user.simple;
 import java.util.Date;
 import java.util.List;
 
+import com.ajie.chilli.support.AbstractOuterIdSupport;
+import com.ajie.chilli.support.service.ServiceSupport;
 import com.ajie.pojo.TbUser;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;
+import com.ajie.sso.user.UserServiceExt;
 import com.ajie.sso.user.enums.SexEnum;
 import com.ajie.sso.user.exception.UserException;
-import com.ajie.support.AbstractOuterIdSupport;
 
 /**
  * 用户抽象实现
@@ -16,7 +18,11 @@ import com.ajie.support.AbstractOuterIdSupport;
  * @author ajie
  *
  */
-public abstract class AbstractUser extends AbstractOuterIdSupport implements User {
+public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt> implements User {
+
+	public AbstractUser(UserServiceExt serviceExt) {
+		super(serviceExt);
+	}
 
 	/**
 	 * 唯一id
@@ -53,6 +59,9 @@ public abstract class AbstractUser extends AbstractOuterIdSupport implements Use
 	 */
 	protected String loginToken;
 
+	/** 外部id实例 */
+	protected OuterId outerIDInstance;
+
 	/**
 	 * 用户拥有的权限
 	 */
@@ -64,18 +73,13 @@ public abstract class AbstractUser extends AbstractOuterIdSupport implements Use
 		return id;
 	}
 
-	protected String getRealId() {
-		return String.valueOf(id);
-	}
-
-	@Override
-	protected String getEntityOuterId() {
-		return outerId;
-	}
-
-	@Override
 	protected void setOuterId(String outerId) {
 		this.outerId = outerId;
+	}
+
+	public String getOuterId() {
+		OuterId outerIdInstance = getOuterIdInstance();
+		return outerIdInstance.getOuterId();
 	}
 
 	@Override
@@ -220,7 +224,7 @@ public abstract class AbstractUser extends AbstractOuterIdSupport implements Use
 	}
 
 	@Override
-	public boolean setPhone(String identifycode, String phone) {
+	public boolean setPhone(String identifycode, String phone) throws UserException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -277,6 +281,38 @@ public abstract class AbstractUser extends AbstractOuterIdSupport implements Use
 	public User valueOf(TbUser tbUser) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public OuterId getOuterIdInstance() {
+		if (null == outerIDInstance) {
+			outerIDInstance = new OuterId();
+		}
+		return outerIDInstance;
+	}
+
+	/**
+	 * 内部类实现外部ID支持，因为不能多继承，所以只能使用内部类实现了
+	 * 
+	 * @author niezhenjie
+	 *
+	 */
+	protected class OuterId extends AbstractOuterIdSupport {
+
+		@Override
+		protected String getRealId() {
+			return String.valueOf(AbstractUser.this.id);
+		}
+
+		@Override
+		protected String getEntityOuterId() {
+			return AbstractUser.this.outerId;
+		}
+
+		@Override
+		protected void setOuterId(String outerId) {
+			AbstractUser.this.outerId = outerId;
+		}
+
 	}
 
 }

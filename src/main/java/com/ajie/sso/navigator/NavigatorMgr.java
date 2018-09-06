@@ -12,7 +12,7 @@ import com.ajie.sso.user.User;
 public interface NavigatorMgr {
 
 	/**
-	 * 根据uri返回所属菜单
+	 * 根据URI或URL返回所属菜单
 	 * 
 	 * @param uri
 	 * @return

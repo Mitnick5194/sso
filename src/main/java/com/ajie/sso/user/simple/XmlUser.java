@@ -3,8 +3,9 @@ package com.ajie.sso.user.simple;
 import java.util.Date;
 import java.util.List;
 
+import com.ajie.pojo.TbUser;
 import com.ajie.sso.user.Role;
-import com.ajie.sso.user.User;
+import com.ajie.sso.user.UserServiceExt;
 
 /**
  * xml配置文件用户，比数据库储存的用户简单很多
@@ -19,7 +20,8 @@ public class XmlUser extends AbstractUser {
 	 */
 	protected String password;
 
-	public XmlUser(int id, String name, String password) {
+	public XmlUser(UserServiceExt service, int id, String name, String password) {
+		super(service);
 		this.id = id;
 		this.name = name;
 		this.password = password;
@@ -85,10 +87,16 @@ public class XmlUser extends AbstractUser {
 
 	}
 
-	public static void main(String[] args) {
-		User u = new XmlUser(1, "ajie", "ajie");
-		String outerID = u.getOuterId();
-		System.out.println(outerID);
+	@Override
+	public TbUser toPojo() {
+		TbUser tbUser = new TbUser();
+		tbUser.setId(this.id);
+		tbUser.setName(this.name);
+		tbUser.setPassword(this.password);
+		tbUser.setEmail(this.email);
+		tbUser.setCreatetime(this.createTime);
+		tbUser.setLastactive(this.lastActive);
+		return tbUser;
 	}
 
 }

@@ -10,6 +10,21 @@
 	<version>1.0.10</version>
 	<packaging>war</packaging>
 	<dependencies>
+		<dependency>
+			<groupId>com.ajie</groupId>
+			<artifactId>chilli</artifactId>
+			<version>1.0.10</version>
+		</dependency>
+		<dependency>
+			<groupId>com.ajie</groupId>
+			<artifactId>dbMapper</artifactId>
+			<version>1.0.10</version>
+		</dependency>
+		<dependency>
+			<groupId>com.ajie</groupId>
+			<artifactId>web</artifactId>
+			<version>1.0.10</version>
+		</dependency>
 		<!-- 日志处理 -->
 		<!-- https://mvnrepository.com/artifact/org.codehaus.jacdkson/jackson-core-asl -->
 		<dependency>
@@ -93,16 +108,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.ajie</groupId>
-			<artifactId>chilli</artifactId>
-			<version>1.0.10</version>
-		</dependency>
-		<dependency>
-			<groupId>com.ajie</groupId>
-			<artifactId>dbMapper</artifactId>
-			<version>1.0.10</version>
-		</dependency>
-		<dependency>
 			<groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>
 		</dependency>
@@ -119,14 +124,14 @@
 			</plugin>
 
 			<!-- 模块打jar包 -->
-	<!-- <plugin> <artifactId>maven-jar-plugin</artifactId> <executions> <execution> 
-		<id>user-module</id> <goals> <goal>jar</goal> </goals>打包的后缀 <phase>package</phase>life的多个阶段 
-		，预打包 <configuration> <outputDirectory>target/user</outputDirectory> <classifier>user-module</classifier> 
-		<includes>引入 路径 <include>**/user/**</include> <include>**/navigator/**</include> 
-		</includes> </configuration> </execution> <execution> <id>all</id> <goals> 
-		<goal>jar</goal> </goals> <phase>package</phase> <configuration> <classifier>all</classifier>***-all.jar 
-		<excludes>排除 <exclude>**/model/**</exclude> </excludes> <includes>引入 <include>**/impl/**</include> 
-		</includes> </configuration> </execution> </executions> </plugin> -->
+			<!-- <plugin> <artifactId>maven-jar-plugin</artifactId> <executions> <execution> 
+				<id>user-module</id> <goals> <goal>jar</goal> </goals>打包的后缀 <phase>package</phase>life的多个阶段 
+				，预打包 <configuration> <outputDirectory>target/user</outputDirectory> <classifier>user-module</classifier> 
+				<includes>引入 路径 <include>**/user/**</include> <include>**/navigator/**</include> 
+				</includes> </configuration> </execution> <execution> <id>all</id> <goals> 
+				<goal>jar</goal> </goals> <phase>package</phase> <configuration> <classifier>all</classifier>***-all.jar 
+				<excludes>排除 <exclude>**/model/**</exclude> </excludes> <includes>引入 <include>**/impl/**</include> 
+				</includes> </configuration> </execution> </executions> </plugin> -->
 
 		</plugins>
 	</build>

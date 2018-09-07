@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.ajie.chilli.common.ResponseResult;
 import com.ajie.chilli.utils.common.JsonUtil;
 import com.ajie.chilli.utils.common.StringUtil;
-import com.ajie.sso.user.Role;
+import com.ajie.sso.navigator.Menu;
+import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
+import com.ajie.web.RemoteUserService;
 import com.alibaba.fastjson.JSONObject;
 
 /**
@@ -30,6 +32,9 @@ public class UserController {
 	public static final Logger logger = LoggerFactory.getLogger(UserController.class);
 	@Resource
 	private UserService userService;
+
+	@Resource
+	private NavigatorMgr navigator;
 
 	private void setAjaxContentType(HttpServletResponse response) {
 		response.setContentType("application/json;charset=UTF-8");
@@ -140,6 +145,26 @@ public class UserController {
 			json.put("email", user.getEmail());
 		}
 		out.print("<h1>" + json.toString() + "</h1>");
+	}
+
+	/**
+	 * jsonp请求导航条
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("nav/navbar.do")
+	void nav(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		setAjaxContentType(response);
+		PrintWriter out = response.getWriter();
+		String token = request.getParameter(RemoteUserService.USER_TOKEN);
+		User user = userService.getUserByToken(token);
+		List<Menu> menus = navigator.getMenus(user);
+		ResponseResult ret = ResponseResult.newResult(ResponseResult.CODE_SUC, menus);
+		out.print(JsonUtil.toJSONString(ret));
+		out.flush();
+		out.close();
 	}
 
 }

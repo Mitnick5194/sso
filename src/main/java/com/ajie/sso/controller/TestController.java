@@ -16,12 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ajie.chilli.utils.common.JsonUtil;
-import com.ajie.pojo.TbUser;
+import com.ajie.dbMapper.pojo.TbUser;
+import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
-import com.alibaba.druid.support.json.JSONUtils;
-import com.alibaba.fastjson.JSONObject;
 
 /**
  * @author niezhenjie
@@ -30,12 +29,12 @@ import com.alibaba.fastjson.JSONObject;
 @Controller
 public class TestController {
 
-	public TestController() {
-		System.out.println("TestController初始化");
-	}
 
 	@Resource
 	private UserService userService;
+	
+	@Resource
+	private NavigatorMgr navigator;
 
 	@RequestMapping(value = "/user/{id}/user.do", produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -77,6 +76,7 @@ public class TestController {
 		response.setContentType("application/json;charset=UTF-8");
 		response.setCharacterEncoding("utf-8");
 		PrintWriter out = response.getWriter();
+		navigator.test();
 		Monkey monkey = new Monkey("King", 12);
 		Monkey father = new Monkey("SuperKing", 20);
 		monkey.setFather(father);

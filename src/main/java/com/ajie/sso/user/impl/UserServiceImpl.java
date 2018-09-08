@@ -7,10 +7,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Resource;
+
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import com.ajie.chilli.support.OuterIdException;
 import com.ajie.chilli.support.OuterIdUtil;
@@ -33,20 +37,28 @@ import com.ajie.sso.user.simple.XmlUser;
  * 
  * @author niezhenjie
  */
+@Service
 public class UserServiceImpl implements UserService, UserServiceExt {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 	/**
 	 * 导航服务
 	 */
+	@Resource
 	protected NavigatorMgr navigatorService;
 
-	public NavigatorMgr getNavigatorService() {
+	/*	@Resource
+		protected TbLabelMapper labelMapper;*/
+
+	/*@Resource
+	protected TbLabelMapper tbLabelMapper;*/
+
+	/*public NavigatorMgr getNavigatorService() {
 		return navigatorService;
 	}
 
 	public void setNavigatorService(NavigatorMgr navigatorService) {
 		this.navigatorService = navigatorService;
-	}
+	}*/
 
 	/**
 	 * 配置用户
@@ -134,6 +146,7 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 		return null;
 	}
 
+	@Value("user.xml")
 	public synchronized void setXmlUsersData(String xml) throws IOException {
 		if (null == xml) {
 			return;
@@ -258,6 +271,7 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 		loadRole(xml);
 	}
 
+	@Value("role.xml")
 	public void loadRole(String path) throws IOException {
 		Document doc = XmlHelper.parseDocument(path);
 		if (null == doc) {

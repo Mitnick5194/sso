@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.ajie.chilli.support.AbstractOuterIdSupport;
 import com.ajie.chilli.support.service.ServiceSupport;
-import com.ajie.pojo.TbUser;
+import com.ajie.dbMapper.pojo.TbUser;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;

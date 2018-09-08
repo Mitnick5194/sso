@@ -159,10 +159,17 @@ public class UserController {
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
 		String token = request.getParameter(RemoteUserService.USER_TOKEN);
-		User user = userService.getUserByToken(token);
+		String callback = request.getParameter("callback");
+		User user = null;
+		try {
+			user = userService.getUserById(token);
+		} catch (UserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		List<Menu> menus = navigator.getMenus(user);
 		ResponseResult ret = ResponseResult.newResult(ResponseResult.CODE_SUC, menus);
-		out.print(JsonUtil.toJSONString(ret));
+		out.print(callback+"(" + JsonUtil.toJSONString(ret) + ")");
 		out.flush();
 		out.close();
 	}

@@ -5,12 +5,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Resource;
+
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import com.ajie.chilli.utils.XmlHelper;
+import com.ajie.dbMapper.mapper.TbLabelMapper;
+import com.ajie.dbMapper.pojo.TbLabel;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.navigator.simple.BaseMenu;
@@ -20,6 +26,7 @@ import com.ajie.sso.user.User;
 /**
  * @author niezhenjie
  */
+@Service
 public class NavigatorMgrImpl implements NavigatorMgr {
 	private static final Logger logger = LoggerFactory.getLogger(NavigatorMgrImpl.class);
 
@@ -30,6 +37,16 @@ public class NavigatorMgrImpl implements NavigatorMgr {
 	/** 锁 */
 	protected Object lock = new Object();
 
+	@Resource
+	protected TbLabelMapper tbLabelMapper;
+
+	@Override
+	public void test() {
+		TbLabel label = tbLabelMapper.selectByPrimaryKey(1);
+		System.out.println(label.getName());
+	}
+
+	@Value("${navigator_config_path_name}")
 	public void setXmlFile(String xmlFile) throws IOException {
 		synchronized (lock) {
 			load(xmlFile);

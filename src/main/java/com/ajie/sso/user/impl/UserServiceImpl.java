@@ -13,6 +13,7 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.XmlHelper;
 import com.ajie.chilli.utils.common.ConstantPool;
 import com.ajie.chilli.utils.common.StringUtil;
+import com.ajie.dao.mapper.TbLabelMapper;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.user.Role;
@@ -38,27 +40,25 @@ import com.ajie.sso.user.simple.XmlUser;
  * @author niezhenjie
  */
 @Service
-public class UserServiceImpl implements UserService, UserServiceExt {
+public class UserServiceImpl implements UserService, UserServiceExt, InitializingBean {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
+	@Value("${xmluser_path_name}")
+	protected String xmlUserPath;
+
+	@Value("${role_file__path_name}")
+	protected String rolePath;
+
+	Object lock = new Object();
+
 	/**
 	 * 导航服务
 	 */
 	@Resource
 	protected NavigatorMgr navigatorService;
 
-	/*	@Resource
-		protected TbLabelMapper labelMapper;*/
-
-	/*@Resource
-	protected TbLabelMapper tbLabelMapper;*/
-
-	/*public NavigatorMgr getNavigatorService() {
-		return navigatorService;
-	}
-
-	public void setNavigatorService(NavigatorMgr navigatorService) {
-		this.navigatorService = navigatorService;
-	}*/
+	@Resource
+	protected TbLabelMapper labelMapper;
 
 	/**
 	 * 配置用户
@@ -144,14 +144,6 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 	public User getUserByName(String name) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Value("user.xml")
-	public synchronized void setXmlUsersData(String xml) throws IOException {
-		if (null == xml) {
-			return;
-		}
-		load(xml);
 	}
 
 	protected void load(String xmlFile) throws IOException {
@@ -264,13 +256,6 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 		return null;
 	}
 
-	public synchronized void setRolesData(String xml) throws IOException {
-		if (null == xml) {
-			return;
-		}
-		loadRole(xml);
-	}
-
 	@Value("role.xml")
 	public void loadRole(String path) throws IOException {
 		Document doc = XmlHelper.parseDocument(path);
@@ -350,5 +335,20 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 			return null;
 		}
 		return navigatorService.getMenuByUri(uri);
+	}
+
+	/**
+	 * 执行完构造方法和所有的setter方法后调用<br>
+	 * 因为多个setter方法执行的顺序是不可预见的，所以需要在这个方法里按照顺序执行<br>
+	 * 如果直接使用setter方法执行，然后注入setter方法参数，有可能会先执行load方法，此时<br>
+	 * 在load里需要用到role的数据，但是role还没有初始化，所以会报错或者没有数据
+	 */
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		synchronized (lock) {
+			loadRole(rolePath);
+			load(xmlUserPath);
+		}
+
 	}
 }

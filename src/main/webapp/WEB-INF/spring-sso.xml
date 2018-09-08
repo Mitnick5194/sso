@@ -22,6 +22,7 @@
 			<list>
 				<value>/nav/navbar.do</value>
 				<value>/user/testJson.do</value>
+				<value>/user/users.do</value>
 			</list>
 		</property>
 		<property name="encoding" value="utf-8" />

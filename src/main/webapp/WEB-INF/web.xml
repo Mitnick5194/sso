@@ -16,7 +16,7 @@
 	<!-- 由spring注册系统模块 -->
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
-		<param-value>/WEB-INF/spring-sso.xml,/WEB-INF/spring-db.xml</param-value>
+		<param-value>/WEB-INF/spring-sso.xml,/WEB-INF/spring-dao.xml</param-value>
 	</context-param>
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>

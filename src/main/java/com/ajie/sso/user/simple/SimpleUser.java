@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.common.StringUtil;
-import com.ajie.dbMapper.pojo.TbUser;
+import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserServiceExt;

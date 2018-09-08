@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.ajie.chilli.utils.XmlHelper;
-import com.ajie.dbMapper.mapper.TbLabelMapper;
-import com.ajie.dbMapper.pojo.TbLabel;
+import com.ajie.dao.mapper.TbLabelMapper;
+import com.ajie.dao.pojo.TbLabel;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.navigator.simple.BaseMenu;

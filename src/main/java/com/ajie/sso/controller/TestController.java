@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ajie.chilli.utils.common.JsonUtil;
-import com.ajie.dbMapper.pojo.TbUser;
+import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserService;

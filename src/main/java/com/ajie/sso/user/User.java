@@ -3,7 +3,7 @@ package com.ajie.sso.user;
 import java.util.Date;
 import java.util.List;
 
-import com.ajie.dbMapper.pojo.TbUser;
+import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.user.enums.SexEnum;
 import com.ajie.sso.user.exception.UserException;
 

@@ -17,6 +17,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.ajie.chilli.Collection.simple.SwitchUnmodifiableList;
 import com.ajie.chilli.support.OuterIdException;
 import com.ajie.chilli.support.OuterIdUtil;
 import com.ajie.chilli.utils.Toolkits;
@@ -61,18 +62,18 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 	protected TbLabelMapper labelMapper;
 
 	/**
-	 * 配置用户
+	 * 配置用户，初始化完成后需要转换成只读列表
 	 */
-	protected List<User> xmlUserCache;
+	protected final SwitchUnmodifiableList<User> xmlUserCache;
 
 	/**
-	 * 所有的权限列表
+	 * 所有的权限列表，初始化完成后需要转换成只读列表
 	 */
-	protected List<Role> roleDatas;
+	protected final SwitchUnmodifiableList<Role> roleDatas;
 
 	public UserServiceImpl() {
-		xmlUserCache = new ArrayList<User>();
-		roleDatas = new ArrayList<Role>();
+		xmlUserCache = new SwitchUnmodifiableList<User>();
+		roleDatas = new SwitchUnmodifiableList<Role>();
 	}
 
 	public List<User> getXmlUsers() {
@@ -146,6 +147,11 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 		return null;
 	}
 
+	/**
+	 * 加载配置用户
+	 * 
+	 * @param doc
+	 */
 	protected void load(String xmlFile) throws IOException {
 		Document doc = XmlHelper.parseDocument(xmlFile);
 		if (null == doc) {
@@ -155,12 +161,15 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 		parseXmlUser(doc);
 	}
 
+	/**
+	 * 加载配置用户
+	 * 
+	 * @param doc
+	 */
 	@SuppressWarnings("unchecked")
 	protected synchronized void parseXmlUser(Document doc) {
 		long start = System.currentTimeMillis();
-		List<User> userList = new ArrayList<User>();
 		String setter = null;
-		List<Role> roleTable = roleDatas;
 		try {
 			Element root = doc.getRootElement();
 			List<Element> users = root.elements("user");
@@ -187,10 +196,10 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 							for (Element e : values) {
 								try {
 									int roleId = Toolkits.Hex2Deci(e.getTextTrim());
-									if (roleTable.size() == 0) {
+									if (roleDatas.size() == 0) {
 										break;
 									}
-									for (Role r : roleTable) {
+									for (Role r : roleDatas) {
 										if (null == r) {
 											continue;
 										}
@@ -211,9 +220,9 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 						method.invoke(user, value);
 					}
 				}
-				userList.add(user);
+				xmlUserCache.add(user);
 			}
-			this.xmlUserCache = userList;
+			xmlUserCache.swithUnmodifiable();
 			long end = System.currentTimeMillis();
 			logger.info("已从配置文件中加载配置用户，耗时 " + (end - start) + " ms");
 		} catch (IllegalAccessException ex) {
@@ -256,7 +265,6 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 		return null;
 	}
 
-	@Value("role.xml")
 	public void loadRole(String path) throws IOException {
 		Document doc = XmlHelper.parseDocument(path);
 		if (null == doc) {
@@ -270,7 +278,6 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 	@SuppressWarnings("unchecked")
 	public synchronized void parseRoles(Document doc) {
 		long start = System.currentTimeMillis();
-		List<Role> roles = this.roleDatas;
 		Element root = doc.getRootElement();
 		List<Element> rolesEle = root.elements("role");
 		for (Element ele : rolesEle) {
@@ -286,7 +293,7 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 			String name = ele.attributeValue("name");
 			String desc = ele.attributeValue("desc");
 			Role role = new SimpleRole(id, name, desc);
-			roles.add(role);
+			roleDatas.add(role);
 			List<Menu> menus = new ArrayList<Menu>();
 			role.setMenus(menus);
 			if (id == Role.ROLE_SU) {
@@ -309,6 +316,7 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 				menus.add(menu);
 			}
 		}
+		roleDatas.swithUnmodifiable();
 		long end = System.currentTimeMillis();
 
 		logger.info("已从配置文件中初始化了用户数据 , 耗时 " + (end - start) + " ms");

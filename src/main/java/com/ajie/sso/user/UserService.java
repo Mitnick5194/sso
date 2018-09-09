@@ -12,12 +12,17 @@ import com.ajie.sso.user.exception.UserException;
 public interface UserService {
 
 	/**
-	 * 获取所有的用户
+	 * 获取所有的用户，不包含配置用户
 	 * 
 	 * @return
 	 */
 	List<User> getUsers();
 
+	/**
+	 * 获取所有的配置用户
+	 * 
+	 * @return
+	 */
 	List<User> getXmlUsers();
 
 	/**
@@ -65,7 +70,5 @@ public interface UserService {
 	 * @return
 	 */
 	User getUserByName(String name);
-
-	
 
 }

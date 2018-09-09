@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+
 import com.ajie.chilli.utils.common.JsonUtil;
 import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.navigator.NavigatorMgr;
@@ -29,12 +32,14 @@ import com.ajie.sso.user.exception.UserException;
 @Controller
 public class TestController {
 
-
 	@Resource
 	private UserService userService;
-	
+
 	@Resource
 	private NavigatorMgr navigator;
+
+	@Resource
+	private JedisPool jedisPool;
 
 	@RequestMapping(value = "/user/{id}/user.do", produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -96,6 +101,9 @@ public class TestController {
 	@RequestMapping("/user/users")
 	public String getUSers(ModelMap model) {
 		List<User> users = userService.getXmlUsers();
+		Jedis jedis = jedisPool.getResource();
+		String ret = jedis.get("green");
+		System.out.println(ret);
 		model.addAttribute("users", users);
 		return "user";
 	}

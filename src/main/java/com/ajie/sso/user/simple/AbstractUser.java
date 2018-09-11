@@ -14,7 +14,8 @@ import com.ajie.sso.user.enums.SexEnum;
 import com.ajie.sso.user.exception.UserException;
 
 /**
- * 用户抽象实现
+ * 用户抽象实现<br>
+ * 一些get方法如果子类没有输出，返回null不要抛异常，否则转换成json会失败的
  * 
  * @author ajie
  *
@@ -90,22 +91,22 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 
 	@Override
 	public String getNickName() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public String getSynopsis() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public SexEnum getSex() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public String getPhone() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
@@ -145,12 +146,12 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 
 	@Override
 	public boolean isLockUser() {
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	@Override
 	public boolean isRegisterVerification() {
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	@Override
@@ -160,7 +161,6 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 		}
 		List<Role> roles = getRoles();
 		roles.add(role);
-		setRoles(roles);
 	}
 
 	@Override
@@ -249,7 +249,7 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 
 	@Override
 	public String getHeader() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
@@ -273,6 +273,8 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 	}
 
 	public abstract List<Role> getRoles();
+
+	public abstract void setRoles(List<Role> roles);
 
 	@Override
 	public boolean checkRole(Role role) {

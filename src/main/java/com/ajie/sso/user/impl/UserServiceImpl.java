@@ -25,6 +25,11 @@ import com.ajie.chilli.utils.XmlHelper;
 import com.ajie.chilli.utils.common.ConstantPool;
 import com.ajie.chilli.utils.common.StringUtil;
 import com.ajie.dao.mapper.TbLabelMapper;
+import com.ajie.dao.mapper.TbUserMapper;
+import com.ajie.dao.pojo.TbUser;
+import com.ajie.dao.pojo.TbUserExample;
+import com.ajie.dao.redis.JedisException;
+import com.ajie.dao.redis.RedisClient;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.user.Role;
@@ -33,6 +38,7 @@ import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.UserServiceExt;
 import com.ajie.sso.user.exception.UserException;
 import com.ajie.sso.user.simple.SimpleRole;
+import com.ajie.sso.user.simple.SimpleUser;
 import com.ajie.sso.user.simple.XmlUser;
 
 /**
@@ -44,12 +50,21 @@ import com.ajie.sso.user.simple.XmlUser;
 public class UserServiceImpl implements UserService, UserServiceExt, InitializingBean {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
+	/**
+	 * 配置用户文件路径
+	 */
 	@Value("${xmluser_path_name}")
 	protected String xmlUserPath;
 
+	/**
+	 * 权限表文件路径
+	 */
 	@Value("${role_file__path_name}")
 	protected String rolePath;
 
+	/**
+	 * 锁
+	 */
 	Object lock = new Object();
 
 	/**
@@ -58,8 +73,23 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 	@Resource
 	protected NavigatorMgr navigatorService;
 
+	/**
+	 * redis客户端服务
+	 */
+	@Resource
+	protected RedisClient redisClient;
+
+	/**
+	 * 标签数据库映射
+	 */
 	@Resource
 	protected TbLabelMapper labelMapper;
+
+	/**
+	 * 用户数据库映射
+	 */
+	@Resource
+	protected TbUserMapper userMapper;
 
 	/**
 	 * 配置用户，初始化完成后需要转换成只读列表
@@ -81,44 +111,39 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 	}
 
 	@Override
-	public List<User> getUsers() {
-		// TODO Auto-generated method stub
+	public List<User> getUsers(int page) {
+		// TODO
 		return null;
 	}
 
 	@Override
-	public boolean checkUserExit(String name) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean checkUserExit(String name) throws UserException {
+		User user = getUserByName(name);
+		return null == user;
 	}
 
 	@Override
 	public User login(String name, String password) throws UserException {
-		if (null == name || null == password) {
-			return null;
+		if (null == name) {
+			throw new UserException("用户账号不存在");
 		}
-		List<User> users = this.xmlUserCache;
-		for (User user : users) {
-			if (null == user) {
-				return null;
-			}
-			if (StringUtil.eq(user.getName(), name) || StringUtil.eq(user.getEmail(), name)
-					|| StringUtil.eq(user.getPhone(), name)) {
-				if (user.vertifyPassword(password)) {
-					return user;
-				}
-			}
+		if (null == password) {
+			throw new UserException("密码错误");
 		}
-		// TODO 到redis查找 || 到数据库查找
-		return null;
+		User users = getUserByName(name);
+		if (!users.vertifyPassword(password)) {
+			throw new UserException("密码错误");
+		}
+		return users;
 	}
 
 	@Override
 	public User getUserById(String outerId) throws UserException {
+		int id = 0;
 		try {
 			String oId = OuterIdUtil.getIdFromOuterId(outerId);
-			int id = Integer.valueOf(oId);
-			for (User user : xmlUserCache) {
+			id = Integer.valueOf(oId);
+			for (User user : xmlUserCache) { // xml配置用户优先
 				if (null == user) {
 					continue;
 				}
@@ -130,21 +155,90 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 			logger.warn("无法从外部ID获取用户: " + e);
 			throw new UserException("用户不存在");
 		}
-		// xml用户没找着，尝试去redis查找 TODO
+		TbUser tbUser = null;
+		try {
+			tbUser = redisClient.hgetAsBean(UserService.USER_REDIS_COOKIE_KEY, String.valueOf(id),
+					TbUser.class);
+		} catch (JedisException e) {
+			logger.warn("", e);
+		}
+		if (null != tbUser) {
+			return new SimpleUser(this, tbUser);
+		}
 		// redis没找着，尝试去数据库中查找
-		return null;
+		tbUser = userMapper.selectByPrimaryKey(id);
+		if (null == tbUser) {
+			return null;
+		}
+		// 放入redis
+		try {
+			redisClient.hset(UserService.USER_REDIS_COOKIE_KEY, String.valueOf(tbUser.getId()),
+					tbUser);
+		} catch (JedisException e) {
+			// ignore redisClient已打印日志，无需外抛
+		}
+		return new SimpleUser(this, tbUser);
 	}
 
 	@Override
 	public User getUserByToken(String token) {
-		// TODO Auto-generated method stub
+		try {
+			TbUser tbUser = redisClient.getAsBean(token, TbUser.class);
+			if (null != tbUser) {
+				return new SimpleUser(this, tbUser);
+			}
+		} catch (JedisException e) {
+			// ignore redisClient已打印日志，无需外抛
+		}
 		return null;
 	}
 
 	@Override
-	public User getUserByName(String name) {
-		// TODO Auto-generated method stub
-		return null;
+	public User getUserByName(String name) throws UserException {
+		if (null == name) {
+			throw new UserException("用户账号不存在");
+		}
+		List<User> users = this.xmlUserCache; // xml配置用户优先
+		if (null != users && !users.isEmpty()) {
+			for (User user : users) {
+				if (null == user) {
+					continue;
+				}
+				if (StringUtil.eq(user.getName(), name) || StringUtil.eq(user.getEmail(), name)
+						|| StringUtil.eq(user.getPhone(), name)) {
+					return user;
+				}
+			}
+		}
+		TbUser u = null;
+		// redis查找
+		try {
+			u = redisClient.hgetAsBean(UserService.USER_REDIS_COOKIE_KEY, name, TbUser.class);
+		} catch (JedisException e1) {
+		}
+		if (null != u) {
+			return new SimpleUser(this, u);
+		}
+		// 到数据库查找
+		TbUserExample example = new TbUserExample();
+		example.createCriteria().andNameEqualTo(name);
+		List<TbUser> tbUsers = userMapper.selectByExample(example);
+		if (null == tbUsers || tbUsers.isEmpty()) {
+			throw new UserException("用户账号不存在");
+		}
+		if (tbUsers.size() > 1) {
+			logger.warn("用户账号异常，用户名结果不唯一: " + name);
+			throw new UserException("用户账号异常，请联系管理员");
+		}
+		u = tbUsers.get(0);
+		// 放入redis
+		try {
+			redisClient.hset(UserService.USER_REDIS_COOKIE_KEY, name, u);
+		} catch (JedisException e) {
+			// ignore redisClient已打印日志，无需外抛
+		}
+		return new SimpleUser(this, u);
+
 	}
 
 	/**
@@ -212,7 +306,6 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 									logger.error("无效权限id: " + e.getTextTrim());
 									continue;
 								}
-
 							}
 						}
 					} else {

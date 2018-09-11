@@ -26,7 +26,6 @@
 			<version>1.0.10</version>
 		</dependency>
 		<!-- 日志处理 -->
-		<!-- https://mvnrepository.com/artifact/org.codehaus.jacdkson/jackson-core-asl -->
 		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-core-asl</artifactId>

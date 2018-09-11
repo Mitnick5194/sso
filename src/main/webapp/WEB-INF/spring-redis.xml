@@ -43,4 +43,8 @@
 		<constructor-arg name="poolConfig" ref="jedisPoolConfig"></constructor-arg>
 	</bean>
 
+	<bean id="redisClient" class="com.ajie.dao.redis.impl.RedisClientImpl">
+		<constructor-arg name="jedisPool" ref="jedisPool" />
+	</bean>
+
 </beans>

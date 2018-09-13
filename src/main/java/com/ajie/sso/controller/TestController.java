@@ -3,6 +3,7 @@ package com.ajie.sso.controller;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -26,9 +27,11 @@ import com.ajie.sso.user.exception.UserException;
 import com.ajie.sso.user.simple.XmlUser;
 
 /**
+ * 测试用的 不用管
+ * 
  * @author niezhenjie
  */
-
+@SuppressWarnings("unused")
 @Controller
 public class TestController {
 
@@ -94,7 +97,7 @@ public class TestController {
 		friends.add(f3);
 		monkey.friends = friends;
 		String ret = JsonUtil.toJSONString(monkey);
-		Monkey mk   = JsonUtil.toBean(ret, Monkey.class);
+		Monkey mk = JsonUtil.toBean(ret, Monkey.class);
 		out.print(ret);
 
 	}
@@ -106,7 +109,7 @@ public class TestController {
 			user = (XmlUser) userService
 					.getUserById("OuterId7225261377271919911196324acevfjmrgmtcorx31536220799784627");
 			String ret = JsonUtil.toJSONString(user);
-			XmlUser u = JsonUtil.toBean(ret,XmlUser.class);
+			XmlUser u = JsonUtil.toBean(ret, XmlUser.class);
 			System.out.println(ret);
 		} catch (UserException e1) {
 			e1.printStackTrace();
@@ -135,6 +138,20 @@ public class TestController {
 		List<User> users = userService.getXmlUsers();
 		model.addAttribute("users", users);
 		return "user";
+	}
+
+	public static void main(String[] args) {
+		TbUser user = new TbUser();
+		user.setName("ajie");
+		user.setPassword("123");
+		user.setNickname("asdfasdf");
+		user.setCreatetime(new Date());
+		user.setLastactive(new Date());
+		String str = JsonUtil.toJSONString(user);
+		System.out.println(str);
+		TbUser tbu = JsonUtil.toBean(str, TbUser.class);
+		System.out.println(tbu.getName());
+		System.out.println(tbu.getCreatetime());
 	}
 
 }
@@ -185,5 +202,5 @@ class Monkey {
 	public void setFriends(List<Monkey> friends) {
 		this.friends = friends;
 	}
-	
+
 }

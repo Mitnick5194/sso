@@ -2,6 +2,7 @@ package com.ajie.sso.user;
 
 import java.util.List;
 
+import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.user.exception.UserException;
 
 /**
@@ -17,9 +18,16 @@ public interface UserService {
 	public static final String USER_REDIS_COOKIE_KEY = "user";
 
 	/**
-	 * 用户token redis key前缀，key由前缀+用户id组成
+	 * 用户token在redis中key的前缀，key由前缀+用户id组成
 	 */
-	public static final String USER_TOKEN_PRE = "user_token_id";
+	public static final String USER_TOKEN_PRE = "user_token_id-";
+
+	/**
+	 * 登录cookie过期时间
+	 */
+	public static final int COOKIE_EXPIRY = 30 * 60;
+
+	User register(TbUser user) throws UserException;
 
 	/**
 	 * 分页获取所有的用户，不包含配置用户
@@ -41,7 +49,7 @@ public interface UserService {
 	 * @param name
 	 *            用户名 || 邮箱||手机号
 	 * @return
-	 * @throws UserException 
+	 * @throws UserException
 	 */
 	boolean checkUserExit(String name) throws UserException;
 
@@ -71,8 +79,9 @@ public interface UserService {
 	 * 
 	 * @param token
 	 * @return
+	 * @throws UserException
 	 */
-	User getUserByToken(String token);
+	User getUserByToken(String token) throws UserException;
 
 	/**
 	 * 通过用户名查找用户

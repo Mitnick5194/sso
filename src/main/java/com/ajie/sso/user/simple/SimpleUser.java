@@ -65,21 +65,62 @@ public class SimpleUser extends AbstractUser {
 		super(service);
 	}
 
-	public SimpleUser(UserServiceExt service, TbUser pojo) {
+	/**
+	 * 通过传入pojo构造，通常用于数据库查询出来的结果转换
+	 * 
+	 * @param service
+	 * @param pojo
+	 * @throws UserException
+	 */
+	public SimpleUser(UserServiceExt service, TbUser pojo) throws UserException {
 		super(service);
+		if (null == pojo.getId()) {
+			throw new UserException("缺少业务对象唯一标识ID");
+		}
 		this.id = pojo.getId();
 		this.name = pojo.getName();
-		this.email = pojo.getName();
+		this.email = pojo.getEmail();
 		this.createTime = pojo.getCreatetime();
 		this.password = pojo.getPassword();
 		this.header = pojo.getHeader();
 		this.lastActive = pojo.getLastactive();
-		this.mark = pojo.getMark();
+		this.mark = null == pojo.getMark() ? 0 : pojo.getMark();
 		this.nickName = pojo.getNickname();
-		this.phone = pojo.getPassword();
-		this.roleIdStr = pojo.getRoleids();
-		this.sex = Integer.valueOf(pojo.getSex());
+		this.phone = pojo.getPhone();
+		if (null == pojo.getRoleids()) { // 默认是登录这角色
+			roleIdStr = String.valueOf(Role.ROLE_LOGINER);
+		} else {
+			this.roleIdStr = pojo.getRoleids();
+		}
+		if (null != pojo.getSex()) {
+			this.sex = Integer.valueOf(pojo.getSex());
+		} else {
+			this.sex = 0;
+		}
 		this.synopsis = pojo.getSynopsis();
+	}
+
+	/**
+	 * 通过用户名，密码，构造一个用户，默认权限为登陆者
+	 * 
+	 * @param name
+	 * @param email
+	 * @param password
+	 * @throws UserException
+	 */
+	public SimpleUser(UserServiceExt service, String name, String password) throws UserException {
+		super(service);
+		if (null == name) {
+			throw new UserException("用户名不能为空");
+		}
+		if (null == password) {
+			throw new UserException("密码不能为空");
+		}
+		this.name = name;
+		this.password = Toolkits.md5Password(password);
+		createTime = new Date();
+		roleIdStr = String.valueOf(Role.ROLE_LOGINER);
+		roles = Collections.emptyList();
 	}
 
 	/**
@@ -228,11 +269,6 @@ public class SimpleUser extends AbstractUser {
 		lastActive = new Date();
 	}
 
-	@Override
-	public String getLoginToken() {
-		return loginToken;
-	}
-
 	public void genLoginToken() {
 
 	}
@@ -370,7 +406,7 @@ public class SimpleUser extends AbstractUser {
 		if (StringUtil.isEmpty(password)) {
 			throw new UserException("密码不能为空");
 		}
-		return Toolkits.md5Password(this.password).equals(Toolkits.md5Password(password));
+		return this.password.equals(Toolkits.md5Password(password));
 	}
 
 	@Override

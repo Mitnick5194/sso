@@ -18,16 +18,9 @@
 	<bean id="
 			requestFilter " class="com.ajie.web.RequestFilter">
 		<property name="userService" ref="remoteUserService" />
-		<property name="ignoreUri">
-			<list>
-				<value>/nav/navbar.do</value>
-				<value>/user/testJson.do</value>
-				<value>/user/users.do</value>
-			</list>
-		</property>
 		<property name="encoding" value="utf-8" />
-		<property name="loginUrl" value="/res/login.do?ref=" />
-
+		<property name="mode" value="intercept" />
+		<property name="loginURL" value="/res/login.do?ref=" />
 	</bean>
 
 	<!-- 用户模块远程支持 -->

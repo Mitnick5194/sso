@@ -111,6 +111,19 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 	}
 
 	@Override
+	public User register(TbUser user) throws UserException {
+		if (null == user) {
+			throw new UserException("参数有误");
+		}
+		User u = new SimpleUser(this, user.getName(), user.getPassword()); // 构造时会初始化一些属性
+		int i = userMapper.insert(u.toPojo());
+		if (i > 0) {
+			return u;
+		}
+		return null;
+	}
+
+	@Override
 	public List<User> getUsers(int page) {
 		// TODO
 		return null;
@@ -130,11 +143,19 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 		if (null == password) {
 			throw new UserException("密码错误");
 		}
-		User users = getUserByName(name);
-		if (!users.vertifyPassword(password)) {
+		User user = getUserByName(name);
+		String token = Toolkits.gen16UniqueId();
+		user.setToken(token);
+		try {
+			redisClient.set(USER_TOKEN_PRE + token, user.toPojo());
+			// 30分钟 token失效
+			redisClient.expire(USER_TOKEN_PRE + token, 60 * 30);
+		} catch (JedisException e) {
+		}
+		if (!user.vertifyPassword(password)) {
 			throw new UserException("密码错误");
 		}
-		return users;
+		return user;
 	}
 
 	@Override
@@ -181,9 +202,9 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 	}
 
 	@Override
-	public User getUserByToken(String token) {
+	public User getUserByToken(String token) throws UserException {
 		try {
-			TbUser tbUser = redisClient.getAsBean(token, TbUser.class);
+			TbUser tbUser = redisClient.getAsBean(USER_TOKEN_PRE + token, TbUser.class);
 			if (null != tbUser) {
 				return new SimpleUser(this, tbUser);
 			}
@@ -211,7 +232,7 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 			}
 		}
 		TbUser u = null;
-		// redis查找
+		// redis根据用户名查找
 		try {
 			u = redisClient.hgetAsBean(UserService.USER_REDIS_COOKIE_KEY, name, TbUser.class);
 		} catch (JedisException e1) {
@@ -452,4 +473,5 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 		}
 
 	}
+
 }

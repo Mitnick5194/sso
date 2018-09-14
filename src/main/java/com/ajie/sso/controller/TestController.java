@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.ajie.chilli.utils.common.JsonUtil;
+import com.ajie.chilli.utils.common.JsonUtils;
 import com.ajie.dao.pojo.TbUser;
 import com.ajie.dao.redis.JedisException;
 import com.ajie.dao.redis.RedisClient;
@@ -72,7 +72,7 @@ public class TestController {
 			TbUser tbUser = new TbUser();
 			tbUser.setName(user.getName());
 			tbUser.setEmail(user.getEmail());
-			out.write(JsonUtil.toJSONString(tbUser));
+			out.write(JsonUtils.toJSONString(tbUser));
 		} catch (UserException e) {
 			e.printStackTrace();
 		}
@@ -96,8 +96,8 @@ public class TestController {
 		friends.add(f2);
 		friends.add(f3);
 		monkey.friends = friends;
-		String ret = JsonUtil.toJSONString(monkey);
-		Monkey mk = JsonUtil.toBean(ret, Monkey.class);
+		String ret = JsonUtils.toJSONString(monkey);
+		Monkey mk = JsonUtils.toBean(ret, Monkey.class);
 		out.print(ret);
 
 	}
@@ -108,8 +108,8 @@ public class TestController {
 		try {
 			user = (XmlUser) userService
 					.getUserById("OuterId7225261377271919911196324acevfjmrgmtcorx31536220799784627");
-			String ret = JsonUtil.toJSONString(user);
-			XmlUser u = JsonUtil.toBean(ret, XmlUser.class);
+			String ret = JsonUtils.toJSONString(user);
+			XmlUser u = JsonUtils.toBean(ret, XmlUser.class);
 			System.out.println(ret);
 		} catch (UserException e1) {
 			e1.printStackTrace();
@@ -147,9 +147,9 @@ public class TestController {
 		user.setNickname("asdfasdf");
 		user.setCreatetime(new Date());
 		user.setLastactive(new Date());
-		String str = JsonUtil.toJSONString(user);
+		String str = JsonUtils.toJSONString(user);
 		System.out.println(str);
-		TbUser tbu = JsonUtil.toBean(str, TbUser.class);
+		TbUser tbu = JsonUtils.toBean(str, TbUser.class);
 		System.out.println(tbu.getName());
 		System.out.println(tbu.getCreatetime());
 	}

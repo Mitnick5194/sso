@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ajie.chilli.utils.Toolkits;
-import com.ajie.chilli.utils.common.StringUtil;
+import com.ajie.chilli.utils.common.StringUtils;
 import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;
@@ -244,20 +244,20 @@ public class SimpleUser extends AbstractUser {
 
 	@Override
 	public boolean setPhone(String vertifycode, String newphone) throws UserException {
-		if (StringUtil.isEmpty(vertifycode)) {
+		if (StringUtils.isEmpty(vertifycode)) {
 			throw new UserException("验证码不能为空");
 		}
-		if (StringUtil.isEmpty(newphone)) {
+		if (StringUtils.isEmpty(newphone)) {
 			throw new UserException("手机号码不能为空");
 		}
-		if (StringUtil.eq(phone, newphone)) {
+		if (StringUtils.eq(phone, newphone)) {
 			throw new UserException("新手机号码不能和原来的一样");
 		}
 		String vcode = getService().getVertifycode(this);
-		if (StringUtil.isEmpty(vcode)) {
+		if (StringUtils.isEmpty(vcode)) {
 			throw new UserException("验证码无效，请从新获取");
 		}
-		if (!StringUtil.eq(vertifycode, vcode)) {
+		if (!StringUtils.eq(vertifycode, vcode)) {
 			throw new UserException("验证码错误");
 		}
 		phone = newphone;
@@ -336,7 +336,7 @@ public class SimpleUser extends AbstractUser {
 	}
 
 	protected List<Integer> splitRoleIds() {
-		if (StringUtil.isEmpty(roleIdStr)) {
+		if (StringUtils.isEmpty(roleIdStr)) {
 			return Collections.emptyList();
 		}
 		String[] ids = roleIdStr.split(Role.ID_SPERATOR);
@@ -403,7 +403,7 @@ public class SimpleUser extends AbstractUser {
 	}
 
 	public boolean vertifyPassword(String password) throws UserException {
-		if (StringUtil.isEmpty(password)) {
+		if (StringUtils.isEmpty(password)) {
 			throw new UserException("密码不能为空");
 		}
 		return this.password.equals(Toolkits.md5Password(password));

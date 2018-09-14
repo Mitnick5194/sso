@@ -23,7 +23,7 @@ import com.ajie.chilli.support.OuterIdUtil;
 import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.XmlHelper;
 import com.ajie.chilli.utils.common.ConstantPool;
-import com.ajie.chilli.utils.common.StringUtil;
+import com.ajie.chilli.utils.common.StringUtils;
 import com.ajie.dao.mapper.TbLabelMapper;
 import com.ajie.dao.mapper.TbUserMapper;
 import com.ajie.dao.pojo.TbUser;
@@ -225,8 +225,8 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 				if (null == user) {
 					continue;
 				}
-				if (StringUtil.eq(user.getName(), name) || StringUtil.eq(user.getEmail(), name)
-						|| StringUtil.eq(user.getPhone(), name)) {
+				if (StringUtils.eq(user.getName(), name) || StringUtils.eq(user.getEmail(), name)
+						|| StringUtils.eq(user.getPhone(), name)) {
 					return user;
 				}
 			}
@@ -453,7 +453,7 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 
 	@Override
 	public Menu getMenuByUri(String uri) {
-		if (StringUtil.isEmpty(uri)) {
+		if (StringUtils.isEmpty(uri)) {
 			return null;
 		}
 		return navigatorService.getMenuByUri(uri);

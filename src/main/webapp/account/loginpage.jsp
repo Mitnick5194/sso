@@ -8,6 +8,7 @@
 <title>登录</title>
 </head>
 <body>
+	<input type="hidden" id="iRef" value="${redirect }" />
 	username: <input id="iUsername" type="text" name="username" /><br>
 	password: <input type="password" id="iPassoword" name="password" /><br>
 	<button id="iLogin">登录</button>

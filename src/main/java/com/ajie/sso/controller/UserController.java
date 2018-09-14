@@ -14,8 +14,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.ajie.chilli.common.ResponseResult;
-import com.ajie.chilli.utils.common.JsonUtil;
-import com.ajie.chilli.utils.common.StringUtil;
+import com.ajie.chilli.utils.common.JsonUtils;
+import com.ajie.chilli.utils.common.StringUtils;
 import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
@@ -25,7 +25,6 @@ import com.ajie.sso.user.exception.UserException;
 import com.ajie.sso.vo.UserVo;
 import com.ajie.web.RemoteUserService;
 import com.ajie.web.utils.CookieUtils;
-import com.alibaba.druid.support.json.JSONUtils;
 import com.alibaba.fastjson.JSONObject;
 
 /**
@@ -66,9 +65,9 @@ public class UserController {
 					UserService.COOKIE_EXPIRY);
 			ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(
 					user));
-			String ret = JsonUtil.toJSONString(result);
+			String ret = JsonUtils.toJSONString(result);
 			// 是否为jsonp调用
-			if (!StringUtil.isEmpty(callback)) {
+			if (!StringUtils.isEmpty(callback)) {
 				out.write(callback + "(" + ret + ")");
 			} else {
 				out.print(ret);
@@ -76,9 +75,9 @@ public class UserController {
 		} catch (UserException e) {
 			ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_ERR,
 					e.getMessage());
-			String ret = JsonUtil.toJSONString(result);
+			String ret = JsonUtils.toJSONString(result);
 			logger.error("登录失败 ", e.getMessage());
-			if (!StringUtil.isEmpty(callback)) {
+			if (!StringUtils.isEmpty(callback)) {
 				out.write(callback + "(" + ret + ")");
 			} else {
 				out.print(ret);
@@ -93,34 +92,12 @@ public class UserController {
 	 * @param response
 	 * @return
 	 */
-	@RequestMapping("user/gotoLogin.do")
-	String gotoLogin(HttpServletRequest request, HttpServletResponse response) {
-		String op = request.getParameter("op");
-		if ("login".equals(op)) {
-			String name = request.getParameter("username");
-			String password = request.getParameter("password");
-			try {
-				User user = userService.login(name, password);
-				// 存放cookie
-				CookieUtils.setCookie(request, response, User.USER_TOKEN, user.getToken(),
-						UserService.COOKIE_EXPIRY);
-				ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_SUC,
-						new UserVo(user));
-				String ret = JsonUtil.toJSONString(result);
-				// 是否为jsonp调用
-			} catch (UserException e) {
-				ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_ERR,
-						e.getMessage());
-				String ret = JsonUtil.toJSONString(result);
-				logger.error("登录失败 ", e.getMessage());
-			}
-			try {
-				response.sendRedirect("http://www.localhost.com:8082");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return "account/login";
+	@RequestMapping("user/loginpage.do")
+	String loginpage(HttpServletRequest request, HttpServletResponse response) {
+		// 从哪个链接进来登录页面
+		String redirect = request.getParameter("redirect");
+		request.setAttribute("redirect", redirect);
+		return "account/loginpage";
 	}
 
 	/**
@@ -130,8 +107,8 @@ public class UserController {
 	 * @param response
 	 * @throws IOException
 	 */
-	@RequestMapping("user/checkRoleForUrl.do")
-	void checkRoleForUrl(HttpServletRequest request, HttpServletResponse response)
+	@RequestMapping("user/checkRole.do")
+	void checkRole(HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
@@ -145,13 +122,13 @@ public class UserController {
 		} catch (UserException e) {
 			ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);
 		} finally {
-			out.print(JsonUtil.toJSONString(ret));
+			out.print(JsonUtils.toJSONString(ret));
 			out.flush();
 			out.close();
 		}
 
 	}
-
+	@RequestMapping("user/getUserByToken.do")
 	void getUserByToken(HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
 		setAjaxContentType(response);
@@ -169,7 +146,8 @@ public class UserController {
 		} else {
 			ret = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
 		}
-		out.print(JSONUtils.toJSONString(ret));
+		String str = JsonUtils.toJSONString(ret);
+		out.print(str);
 
 	}
 
@@ -221,7 +199,7 @@ public class UserController {
 		}
 		List<Menu> menus = navigator.getMenus(user);
 		ResponseResult ret = ResponseResult.newResult(ResponseResult.CODE_SUC, menus);
-		out.print(callback + "(" + JsonUtil.toJSONString(ret) + ")");
+		out.print(callback + "(" + JsonUtils.toJSONString(ret) + ")");
 		out.flush();
 		out.close();
 	}
@@ -247,7 +225,7 @@ public class UserController {
 		try {
 			User u = userService.register(user);
 			ret = ResponseResult.newResult(ResponseResult.CODE_SUC, u);
-			out.print(callback + "(" + JsonUtil.toJSONString(ret) + ")");
+			out.print(callback + "(" + JsonUtils.toJSONString(ret) + ")");
 		} catch (UserException e) {
 			logger.error("用户注册失败", e);
 			ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);

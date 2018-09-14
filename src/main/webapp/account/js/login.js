@@ -3,7 +3,7 @@ $("#iLogin").on("click" , function(){
 		var password = $("#iPassoword").val();
 		var jsonp = document.createElement("script");
    		jsonp.type = "text/javascript";
-   		jsonp.src="http://127.0.0.1:8081/user/login.do?callback=showUser&username="+escape(username)+"&password="+escape(password); 
+   		jsonp.src="http://www.localhost.com:8081/user/login.do?callback=showUser&username="+escape(username)+"&password="+escape(password); 
    		document.getElementsByTagName("head")[0].appendChild(jsonp); 
 })
 

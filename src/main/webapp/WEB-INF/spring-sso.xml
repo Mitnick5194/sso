@@ -19,7 +19,12 @@
 			requestFilter " class="com.ajie.web.RequestFilter">
 		<property name="userService" ref="remoteUserService" />
 		<property name="encoding" value="utf-8" />
-		<property name="mode" value="intercept" />
+		<property name="mode" value="ignore" />
+		<property name="uriList">
+			<list>
+				<value>/user/*</value>
+			</list>
+		</property>
 		<property name="loginURL" value="/res/login.do?ref=" />
 	</bean>
 

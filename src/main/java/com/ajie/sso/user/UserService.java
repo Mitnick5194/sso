@@ -75,13 +75,22 @@ public interface UserService {
 	User getUserById(String outerId) throws UserException;
 
 	/**
+	 * 通过id获取用户
+	 * 
+	 * @param outerId
+	 * @return
+	 * @throws UserException
+	 */
+	User getUserById(int id) throws UserException;
+
+	/**
 	 * 通过token获取用户
 	 * 
 	 * @param token
 	 * @return
 	 * @throws UserException
 	 */
-	User getUserByToken(String token) throws UserException;
+	TbUser getUserByToken(String token) throws UserException;
 
 	/**
 	 * 通过用户名查找用户

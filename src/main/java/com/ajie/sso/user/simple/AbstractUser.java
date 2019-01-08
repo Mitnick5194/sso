@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.ajie.chilli.support.AbstractOuterIdSupport;
-import com.ajie.chilli.support.service.ServiceSupport;
+import com.ajie.chilli.support.service.ServiceDi;
 import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.user.Role;
@@ -20,7 +20,7 @@ import com.ajie.sso.user.exception.UserException;
  * @author ajie
  *
  */
-public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt> implements User {
+public abstract class AbstractUser extends ServiceDi<TbUser, UserServiceExt> implements User {
 
 	public AbstractUser(UserServiceExt serviceExt) {
 		super(serviceExt);

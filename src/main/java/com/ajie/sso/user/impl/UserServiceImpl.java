@@ -164,17 +164,23 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 		try {
 			String oId = OuterIdUtil.getIdFromOuterId(outerId);
 			id = Integer.valueOf(oId);
-			for (User user : xmlUserCache) { // xml配置用户优先
-				if (null == user) {
-					continue;
-				}
-				if (user.getId() == id) {
-					return user;
-				}
-			}
+			return getUserById(id);
 		} catch (OuterIdException e) {
 			logger.warn("无法从外部ID获取用户: " + e);
 			throw new UserException("用户不存在");
+		}
+
+	}
+
+	@Override
+	public User getUserById(int id) throws UserException {
+		for (User user : xmlUserCache) { // xml配置用户优先
+			if (null == user) {
+				continue;
+			}
+			if (user.getId() == id) {
+				return user;
+			}
 		}
 		TbUser tbUser = null;
 		try {
@@ -202,12 +208,13 @@ public class UserServiceImpl implements UserService, UserServiceExt, Initializin
 	}
 
 	@Override
-	public User getUserByToken(String token) throws UserException {
+	public TbUser getUserByToken(String token) throws UserException {
 		try {
 			TbUser tbUser = redisClient.getAsBean(USER_TOKEN_PRE + token, TbUser.class);
-			if (null != tbUser) {
+			return tbUser;
+			/*if (null != tbUser) {
 				return new SimpleUser(this, tbUser);
-			}
+			}*/
 		} catch (JedisException e) {
 			// ignore redisClient已打印日志，无需外抛
 		}

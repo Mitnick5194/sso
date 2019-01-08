@@ -55,6 +55,11 @@ public class UserVo {
 	}
 
 	public String getSex() {
-		return null == user ? tbUser.getSex() : user.getSex().getName();
+		return null == user ? tbUser.getSex() : null == user.getSex() ? "未知" : user.getSex()
+				.getName();
+	}
+
+	public String getHeaderImg() {
+		return null == user ? tbUser.getHeader() : user.getHeader();
 	}
 }

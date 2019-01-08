@@ -25,7 +25,6 @@ import com.ajie.sso.user.exception.UserException;
 import com.ajie.sso.vo.UserVo;
 import com.ajie.web.RemoteUserService;
 import com.ajie.web.utils.CookieUtils;
-import com.alibaba.fastjson.JSONObject;
 
 /**
  * @author niezhenjie
@@ -100,6 +99,39 @@ public class UserController {
 		return "account/loginpage";
 	}
 
+	@RequestMapping("user/getuser.do")
+	void getuser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		setAjaxContentType(response);
+		PrintWriter out = response.getWriter();
+		String sid = request.getParameter("id");
+		// 内部id，一般是httpclient直接调用时使用
+		boolean inner = Boolean.valueOf(request.getParameter("inner"));
+		ResponseResult ret = null;
+		User user = null;
+		if (inner) {
+			try {
+				int id = Integer.valueOf(sid);
+				user = userService.getUserById(id);
+			} catch (Exception e) {
+				ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);
+			}
+		} else {
+			try {
+				user = userService.getUserById(sid);
+			} catch (UserException e) {
+				ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);
+			}
+		}
+		if (null == ret) {
+			if (null != user) {
+				ret = ResponseResult.newResult(ResponseResult.CODE_SUC, user.toPojo());
+			} else {
+				ret = ResponseResult.newResult(ResponseResult.CODE_NORET, user);
+			}
+		}
+		out.print(JsonUtils.toJSONString(ret));
+	}
+
 	/**
 	 * 检测用户是否有权限访问给定的url
 	 * 
@@ -107,9 +139,8 @@ public class UserController {
 	 * @param response
 	 * @throws IOException
 	 */
-	@RequestMapping("user/checkRole.do")
-	void checkRole(HttpServletRequest request, HttpServletResponse response)
-			throws IOException {
+	@RequestMapping("user/checkrole.do")
+	void checkrole(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
 		String userId = request.getParameter("id");
@@ -128,13 +159,14 @@ public class UserController {
 		}
 
 	}
-	@RequestMapping("user/getUserByToken.do")
-	void getUserByToken(HttpServletRequest request, HttpServletResponse response)
+
+	@RequestMapping("user/getuserbytoken.do")
+	void getuserbytoken(HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
 		String token = request.getParameter("token");
-		User user = null;
+		TbUser user = null;
 		try {
 			user = userService.getUserByToken(token);
 		} catch (UserException e) {
@@ -144,37 +176,11 @@ public class UserController {
 		if (null == user) {
 			ret = ResponseResult.newResult(ResponseResult.CODE_NORET, "");
 		} else {
-			ret = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
+			ret = ResponseResult.newResult(ResponseResult.CODE_SUC, user);
 		}
 		String str = JsonUtils.toJSONString(ret);
 		out.print(str);
 
-	}
-
-	@RequestMapping
-	void getUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		setAjaxContentType(response);
-		PrintWriter out = response.getWriter();
-		// XmlUser5016237640858808320000378nufpoqdbsqvqslv11535795540430979
-		String id = request.getParameter("id");
-		User user = null;
-		try {
-			List<User> users = userService.getXmlUsers();
-			if (users.size() > 0) {
-				for (User u : users) {
-					logger.info(u.getOuterId());
-				}
-			}
-			user = userService.getUserById(id);
-		} catch (UserException e) {
-			logger.error("获取用户失败:", e);
-		}
-		JSONObject json = new JSONObject();
-		if (null != user) {
-			json.put("name", user.getName());
-			json.put("email", user.getEmail());
-		}
-		out.print("<h1>" + json.toString() + "</h1>");
 	}
 
 	/**
@@ -185,7 +191,7 @@ public class UserController {
 	 * @throws IOException
 	 */
 	@RequestMapping("nav/navbar.do")
-	void nav(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	void navbar(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
 		String token = request.getParameter(RemoteUserService.USER_TOKEN);
@@ -194,8 +200,7 @@ public class UserController {
 		try {
 			user = userService.getUserById(token);
 		} catch (UserException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//Ignore
 		}
 		List<Menu> menus = navigator.getMenus(user);
 		ResponseResult ret = ResponseResult.newResult(ResponseResult.CODE_SUC, menus);
@@ -240,7 +245,7 @@ public class UserController {
 	 * @throws IOException
 	 */
 	@RequestMapping("/account/register")
-	String accountRegister(HttpServletRequest request, HttpServletResponse response)
+	String accountregister(HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
 		return "account/register";
 	}

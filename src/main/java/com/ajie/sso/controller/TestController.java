@@ -142,7 +142,7 @@ public class TestController {
 
 	public static void main(String[] args) {
 		TbUser user = new TbUser();
-		user.setName("ajie");
+		/*user.setName("ajie");
 		user.setPassword("123");
 		user.setNickname("asdfasdf");
 		user.setCreatetime(new Date());
@@ -151,7 +151,9 @@ public class TestController {
 		System.out.println(str);
 		TbUser tbu = JsonUtils.toBean(str, TbUser.class);
 		System.out.println(tbu.getName());
-		System.out.println(tbu.getCreatetime());
+		System.out.println(tbu.getCreatetime());*/
+		String ret = JsonUtils.toJSONString(user);
+		System.out.println(ret);
 	}
 
 }

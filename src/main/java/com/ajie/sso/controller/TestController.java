@@ -15,13 +15,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.ajie.chilli.utils.common.JsonUtil;
+import com.ajie.chilli.utils.common.JsonUtils;
 import com.ajie.pojo.TbUser;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
-import com.alibaba.druid.support.json.JSONUtils;
-import com.alibaba.fastjson.JSONObject;
 
 /**
  * @author niezhenjie
@@ -65,7 +63,7 @@ public class TestController {
 			TbUser tbUser = new TbUser();
 			tbUser.setName(user.getName());
 			tbUser.setEmail(user.getEmail());
-			out.write(JsonUtil.toJSONString(tbUser));
+			out.write(JsonUtils.toJSONString(tbUser));
 		} catch (UserException e) {
 			e.printStackTrace();
 		}
@@ -88,8 +86,8 @@ public class TestController {
 		friends.add(f2);
 		friends.add(f3);
 		monkey.setFriends(friends);
-		System.out.println(JsonUtil.toJSONString(monkey));
-		out.print(JsonUtil.toJSONString(monkey));
+		System.out.println(JsonUtils.toJSONString(monkey));
+		out.print(JsonUtils.toJSONString(monkey));
 
 	}
 

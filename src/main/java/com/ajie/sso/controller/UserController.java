@@ -14,9 +14,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.ajie.chilli.common.ResponseResult;
-import com.ajie.chilli.utils.common.JsonUtil;
-import com.ajie.chilli.utils.common.StringUtil;
-import com.ajie.sso.user.Role;
+import com.ajie.chilli.utils.common.JsonUtils;
+import com.ajie.chilli.utils.common.StringUtils;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
@@ -54,7 +53,7 @@ public class UserController {
 			User user = userService.login(name, password);
 			ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_SUC, user);
 			// 是否为jsonp调用
-			if (!StringUtil.isEmpty(callback)) {
+			if (!StringUtils.isEmpty(callback)) {
 				out.write(callback + "(" + result + ")");
 			} else {
 				out.print(result);
@@ -63,7 +62,7 @@ public class UserController {
 			ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_ERR,
 					e.getMessage());
 			logger.error("登录失败 ", e);
-			if (!StringUtil.isEmpty(callback)) {
+			if (!StringUtils.isEmpty(callback)) {
 				out.write(callback + "(" + result + ")");
 			} else {
 				out.print(result);
@@ -105,7 +104,7 @@ public class UserController {
 		} catch (UserException e) {
 			ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);
 		} finally {
-			out.print(JsonUtil.toJSONString(ret));
+			out.print(JsonUtils.toJSONString(ret));
 			out.flush();
 			out.close();
 		}

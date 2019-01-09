@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+  http://www.springframework.org/schema/context
+  http://www.springframework.org/schema/context/spring-context-2.5.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-2.5.xsd">
+
+	<!-- 加载所有的配置文件 -->
+	<context:property-placeholder location="classpath:properties/*.properties" />
+
+	<!-- 连接池 -->
+	<bean class="com.alibaba.druid.pool.DruidDataSource" id="dataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.passwd}" />
+		<property name="maxActive" value="10" />
+		<property name="minIdle" value="5" />
+	</bean>
+	<!-- 让spring管理sqlsessionfactory 使用mybatis和spring整合包中的 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 数据库连接池 -->
+		<property name="dataSource" ref="dataSource" />
+		<!-- 加载mybatis的全局配置文件 -->
+		<property name="configLocation" value="classpath:mybatis/SqlMapperConfig.xml" />
+	</bean>
+
+
+	<!-- 扫描mapper包 注意 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.mapper" />
+	</bean>
+
+	<!-- 导航管理 -->
+	<bean id="navigatorMgr" class="com.ajie.sso.navigator.impl.NavigatorMgrImpl">
+		<property name="xmlFile" value="navigator.xml" />
+	</bean>
+	
+	
+	<context:component-scan base-package="com.member" />
+	
+	<!-- 用户服务 -->
+	<bean id="userService" class="com.ajie.sso.user.impl.UserServiceImpl">
+		<property name="navigatorService" ref="navigatorMgr" />
+		<property name="rolesData" value="role.xml" />
+		<property name="xmlUsersData" value="user.xml" />
+	</bean>
+
+
+
+
+</beans>

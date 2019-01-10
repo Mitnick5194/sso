@@ -3,7 +3,7 @@ package com.ajie.sso.user;
 import java.util.Date;
 import java.util.List;
 
-import com.ajie.pojo.TbUser;
+import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.user.enums.SexEnum;
 import com.ajie.sso.user.exception.UserException;
 
@@ -125,12 +125,6 @@ public interface User {
 	 */
 	Date getCreateTime();
 
-	/**
-	 * 登录token
-	 * 
-	 * @return
-	 */
-	String getLoginToken();
 
 	/**
 	 * 锁定用户（锁定后不能登录）
@@ -310,5 +304,19 @@ public interface User {
 	 * @return
 	 */
 	TbUser toPojo();
+
+	/**
+	 * 登录token
+	 * 
+	 * @param token
+	 */
+	void setToken(String token);
+
+	/**
+	 * 获取登录token
+	 * 
+	 * @return
+	 */
+	String getToken();
 
 }

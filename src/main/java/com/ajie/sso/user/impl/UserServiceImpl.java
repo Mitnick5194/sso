@@ -7,17 +7,29 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Resource;
+
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
+import com.ajie.chilli.Collection.simple.SwitchUnmodifiableList;
 import com.ajie.chilli.support.OuterIdException;
 import com.ajie.chilli.support.OuterIdUtil;
 import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.XmlHelper;
 import com.ajie.chilli.utils.common.ConstantPool;
-import com.ajie.chilli.utils.common.StringUtil;
+import com.ajie.chilli.utils.common.StringUtils;
+import com.ajie.dao.mapper.TbLabelMapper;
+import com.ajie.dao.mapper.TbUserMapper;
+import com.ajie.dao.pojo.TbUser;
+import com.ajie.dao.pojo.TbUserExample;
+import com.ajie.dao.redis.JedisException;
+import com.ajie.dao.redis.RedisClient;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.user.Role;
@@ -26,6 +38,7 @@ import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.UserServiceExt;
 import com.ajie.sso.user.exception.UserException;
 import com.ajie.sso.user.simple.SimpleRole;
+import com.ajie.sso.user.simple.SimpleUser;
 import com.ajie.sso.user.simple.XmlUser;
 
 /**
@@ -33,34 +46,64 @@ import com.ajie.sso.user.simple.XmlUser;
  * 
  * @author niezhenjie
  */
-public class UserServiceImpl implements UserService, UserServiceExt {
+@Service
+public class UserServiceImpl implements UserService, UserServiceExt, InitializingBean {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
+	/**
+	 * 配置用户文件路径
+	 */
+	@Value("${xmluser_path_name}")
+	protected String xmlUserPath;
+
+	/**
+	 * 权限表文件路径
+	 */
+	@Value("${role_file__path_name}")
+	protected String rolePath;
+
+	/**
+	 * 锁
+	 */
+	Object lock = new Object();
+
 	/**
 	 * 导航服务
 	 */
+	@Resource
 	protected NavigatorMgr navigatorService;
 
-	public NavigatorMgr getNavigatorService() {
-		return navigatorService;
-	}
-
-	public void setNavigatorService(NavigatorMgr navigatorService) {
-		this.navigatorService = navigatorService;
-	}
+	/**
+	 * redis客户端服务
+	 */
+	@Resource
+	protected RedisClient redisClient;
 
 	/**
-	 * 配置用户
+	 * 标签数据库映射
 	 */
-	protected List<User> xmlUserCache;
+	@Resource
+	protected TbLabelMapper labelMapper;
 
 	/**
-	 * 所有的权限列表
+	 * 用户数据库映射
 	 */
-	protected List<Role> roleDatas;
+	@Resource
+	protected TbUserMapper userMapper;
+
+	/**
+	 * 配置用户，初始化完成后需要转换成只读列表
+	 */
+	protected final SwitchUnmodifiableList<User> xmlUserCache;
+
+	/**
+	 * 所有的权限列表，初始化完成后需要转换成只读列表
+	 */
+	protected final SwitchUnmodifiableList<Role> roleDatas;
 
 	public UserServiceImpl() {
-		xmlUserCache = new ArrayList<User>();
-		roleDatas = new ArrayList<Role>();
+		xmlUserCache = new SwitchUnmodifiableList<User>();
+		roleDatas = new SwitchUnmodifiableList<Role>();
 	}
 
 	public List<User> getXmlUsers() {
@@ -68,79 +111,169 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 	}
 
 	@Override
-	public List<User> getUsers() {
-		// TODO Auto-generated method stub
+	public User register(TbUser user) throws UserException {
+		if (null == user) {
+			throw new UserException("参数有误");
+		}
+		User u = new SimpleUser(this, user.getName(), user.getPassword()); // 构造时会初始化一些属性
+		int i = userMapper.insert(u.toPojo());
+		if (i > 0) {
+			return u;
+		}
 		return null;
 	}
 
 	@Override
-	public boolean checkUserExit(String name) {
-		// TODO Auto-generated method stub
-		return false;
+	public List<User> getUsers(int page) {
+		// TODO
+		return null;
+	}
+
+	@Override
+	public boolean checkUserExit(String name) throws UserException {
+		User user = getUserByName(name);
+		return null == user;
 	}
 
 	@Override
 	public User login(String name, String password) throws UserException {
-		if (null == name || null == password) {
-			return null;
+		if (null == name) {
+			throw new UserException("用户账号不存在");
 		}
-		List<User> users = this.xmlUserCache;
-		for (User user : users) {
-			if (null == user) {
-				return null;
-			}
-			if (StringUtil.eq(user.getName(), name) || StringUtil.eq(user.getEmail(), name)
-					|| StringUtil.eq(user.getPhone(), name)) {
-				if (user.vertifyPassword(password)) {
-					return user;
-				}
-			}
+		if (null == password) {
+			throw new UserException("密码错误");
 		}
-		// TODO 到redis查找 || 到数据库查找
-		return null;
+		User user = getUserByName(name);
+		String token = Toolkits.gen16UniqueId();
+		user.setToken(token);
+		try {
+			redisClient.set(USER_TOKEN_PRE + token, user.toPojo());
+			// 30分钟 token失效
+			redisClient.expire(USER_TOKEN_PRE + token, 60 * 30);
+		} catch (JedisException e) {
+		}
+		if (!user.vertifyPassword(password)) {
+			throw new UserException("密码错误");
+		}
+		return user;
 	}
 
 	@Override
 	public User getUserById(String outerId) throws UserException {
+		int id = 0;
 		try {
 			String oId = OuterIdUtil.getIdFromOuterId(outerId);
-			int id = Integer.valueOf(oId);
-			for (User user : xmlUserCache) {
-				if (null == user) {
-					continue;
-				}
-				if (user.getId() == id) {
-					return user;
-				}
-			}
+			id = Integer.valueOf(oId);
+			return getUserById(id);
 		} catch (OuterIdException e) {
 			logger.warn("无法从外部ID获取用户: " + e);
 			throw new UserException("用户不存在");
 		}
-		// xml用户没找着，尝试去redis查找 TODO
-		// redis没找着，尝试去数据库中查找
-		return null;
+
 	}
 
 	@Override
-	public User getUserByToken(String token) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public User getUserByName(String name) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public synchronized void setXmlUsersData(String xml) throws IOException {
-		if (null == xml) {
-			return;
+	public User getUserById(int id) throws UserException {
+		for (User user : xmlUserCache) { // xml配置用户优先
+			if (null == user) {
+				continue;
+			}
+			if (user.getId() == id) {
+				return user;
+			}
 		}
-		load(xml);
+		TbUser tbUser = null;
+		try {
+			tbUser = redisClient.hgetAsBean(UserService.USER_REDIS_COOKIE_KEY, String.valueOf(id),
+					TbUser.class);
+		} catch (JedisException e) {
+			logger.warn("", e);
+		}
+		if (null != tbUser) {
+			return new SimpleUser(this, tbUser);
+		}
+		// redis没找着，尝试去数据库中查找
+		tbUser = userMapper.selectByPrimaryKey(id);
+		if (null == tbUser) {
+			return null;
+		}
+		// 放入redis
+		try {
+			redisClient.hset(UserService.USER_REDIS_COOKIE_KEY, String.valueOf(tbUser.getId()),
+					tbUser);
+		} catch (JedisException e) {
+			// ignore redisClient已打印日志，无需外抛
+		}
+		return new SimpleUser(this, tbUser);
 	}
 
+	@Override
+	public TbUser getUserByToken(String token) throws UserException {
+		try {
+			TbUser tbUser = redisClient.getAsBean(USER_TOKEN_PRE + token, TbUser.class);
+			return tbUser;
+			/*if (null != tbUser) {
+				return new SimpleUser(this, tbUser);
+			}*/
+		} catch (JedisException e) {
+			// ignore redisClient已打印日志，无需外抛
+		}
+		return null;
+	}
+
+	@Override
+	public User getUserByName(String name) throws UserException {
+		if (null == name) {
+			throw new UserException("用户账号不存在");
+		}
+		List<User> users = this.xmlUserCache; // xml配置用户优先
+		if (null != users && !users.isEmpty()) {
+			for (User user : users) {
+				if (null == user) {
+					continue;
+				}
+				if (StringUtils.eq(user.getName(), name) || StringUtils.eq(user.getEmail(), name)
+						|| StringUtils.eq(user.getPhone(), name)) {
+					return user;
+				}
+			}
+		}
+		TbUser u = null;
+		// redis根据用户名查找
+		try {
+			u = redisClient.hgetAsBean(UserService.USER_REDIS_COOKIE_KEY, name, TbUser.class);
+		} catch (JedisException e1) {
+		}
+		if (null != u) {
+			return new SimpleUser(this, u);
+		}
+		// 到数据库查找
+		TbUserExample example = new TbUserExample();
+		example.createCriteria().andNameEqualTo(name);
+		List<TbUser> tbUsers = userMapper.selectByExample(example);
+		if (null == tbUsers || tbUsers.isEmpty()) {
+			throw new UserException("用户账号不存在");
+		}
+		if (tbUsers.size() > 1) {
+			logger.warn("用户账号异常，用户名结果不唯一: " + name);
+			throw new UserException("用户账号异常，请联系管理员");
+		}
+		u = tbUsers.get(0);
+		// 放入redis
+		try {
+			redisClient.hset(UserService.USER_REDIS_COOKIE_KEY, name, u);
+		} catch (JedisException e) {
+			// ignore redisClient已打印日志，无需外抛
+		}
+		return new SimpleUser(this, u);
+
+	}
+
+	/**
+	 * 加载配置用户
+	 * 
+	 * @param doc
+	 */
 	protected void load(String xmlFile) throws IOException {
 		Document doc = XmlHelper.parseDocument(xmlFile);
 		if (null == doc) {
@@ -150,12 +283,15 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 		parseXmlUser(doc);
 	}
 
+	/**
+	 * 加载配置用户
+	 * 
+	 * @param doc
+	 */
 	@SuppressWarnings("unchecked")
 	protected synchronized void parseXmlUser(Document doc) {
 		long start = System.currentTimeMillis();
-		List<User> userList = new ArrayList<User>();
 		String setter = null;
-		List<Role> roleTable = roleDatas;
 		try {
 			Element root = doc.getRootElement();
 			List<Element> users = root.elements("user");
@@ -182,10 +318,10 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 							for (Element e : values) {
 								try {
 									int roleId = Toolkits.Hex2Deci(e.getTextTrim());
-									if (roleTable.size() == 0) {
+									if (roleDatas.size() == 0) {
 										break;
 									}
-									for (Role r : roleTable) {
+									for (Role r : roleDatas) {
 										if (null == r) {
 											continue;
 										}
@@ -198,7 +334,6 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 									logger.error("无效权限id: " + e.getTextTrim());
 									continue;
 								}
-
 							}
 						}
 					} else {
@@ -206,9 +341,9 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 						method.invoke(user, value);
 					}
 				}
-				userList.add(user);
+				xmlUserCache.add(user);
 			}
-			this.xmlUserCache = userList;
+			xmlUserCache.swithUnmodifiable();
 			long end = System.currentTimeMillis();
 			logger.info("已从配置文件中加载配置用户，耗时 " + (end - start) + " ms");
 		} catch (IllegalAccessException ex) {
@@ -251,13 +386,6 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 		return null;
 	}
 
-	public synchronized void setRolesData(String xml) throws IOException {
-		if (null == xml) {
-			return;
-		}
-		loadRole(xml);
-	}
-
 	public void loadRole(String path) throws IOException {
 		Document doc = XmlHelper.parseDocument(path);
 		if (null == doc) {
@@ -271,7 +399,6 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 	@SuppressWarnings("unchecked")
 	public synchronized void parseRoles(Document doc) {
 		long start = System.currentTimeMillis();
-		List<Role> roles = this.roleDatas;
 		Element root = doc.getRootElement();
 		List<Element> rolesEle = root.elements("role");
 		for (Element ele : rolesEle) {
@@ -287,7 +414,7 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 			String name = ele.attributeValue("name");
 			String desc = ele.attributeValue("desc");
 			Role role = new SimpleRole(id, name, desc);
-			roles.add(role);
+			roleDatas.add(role);
 			List<Menu> menus = new ArrayList<Menu>();
 			role.setMenus(menus);
 			if (id == Role.ROLE_SU) {
@@ -310,6 +437,7 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 				menus.add(menu);
 			}
 		}
+		roleDatas.swithUnmodifiable();
 		long end = System.currentTimeMillis();
 
 		logger.info("已从配置文件中初始化了用户数据 , 耗时 " + (end - start) + " ms");
@@ -332,9 +460,25 @@ public class UserServiceImpl implements UserService, UserServiceExt {
 
 	@Override
 	public Menu getMenuByUri(String uri) {
-		if (StringUtil.isEmpty(uri)) {
+		if (StringUtils.isEmpty(uri)) {
 			return null;
 		}
 		return navigatorService.getMenuByUri(uri);
 	}
+
+	/**
+	 * 执行完构造方法和所有的setter方法后调用<br>
+	 * 因为多个setter方法执行的顺序是不可预见的，所以需要在这个方法里按照顺序执行<br>
+	 * 如果直接使用setter方法执行，然后注入setter方法参数，有可能会先执行load方法，此时<br>
+	 * 在load里需要用到role的数据，但是role还没有初始化，所以会报错或者没有数据
+	 */
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		synchronized (lock) {
+			loadRole(rolePath);
+			load(xmlUserPath);
+		}
+
+	}
+
 }

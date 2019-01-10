@@ -16,10 +16,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.ajie.chilli.common.ResponseResult;
 import com.ajie.chilli.utils.common.JsonUtils;
 import com.ajie.chilli.utils.common.StringUtils;
+<<<<<<< HEAD
+=======
+import com.ajie.dao.pojo.TbUser;
+import com.ajie.sso.navigator.Menu;
+import com.ajie.sso.navigator.NavigatorMgr;
+>>>>>>> a07969feffe1a4bfd52a945a06633d96be6d0337
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
-import com.alibaba.fastjson.JSONObject;
+import com.ajie.sso.vo.UserVo;
+import com.ajie.web.RemoteUserService;
+import com.ajie.web.utils.CookieUtils;
 
 /**
  * @author niezhenjie
@@ -30,13 +38,16 @@ public class UserController {
 	@Resource
 	private UserService userService;
 
+	@Resource
+	private NavigatorMgr navigator;
+
 	private void setAjaxContentType(HttpServletResponse response) {
 		response.setContentType("application/json;charset=UTF-8");
 		response.setCharacterEncoding("utf-8");
 	}
 
 	/**
-	 * 登录 aj请求
+	 * 登录 aj或jsonp请求
 	 * 
 	 * @param request
 	 * @param response
@@ -44,28 +55,34 @@ public class UserController {
 	 */
 	@RequestMapping("user/login.do")
 	void login(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		String name = request.getParameter("id");
+		String name = request.getParameter("username");
 		String password = request.getParameter("password");
 		String callback = request.getParameter("callback");
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
 		try {
 			User user = userService.login(name, password);
-			ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_SUC, user);
+			// 存放cookie
+			CookieUtils.setCookie(request, response, User.USER_TOKEN, user.getToken(),
+					UserService.COOKIE_EXPIRY);
+			ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(
+					user));
+			String ret = JsonUtils.toJSONString(result);
 			// 是否为jsonp调用
 			if (!StringUtils.isEmpty(callback)) {
 				out.write(callback + "(" + result + ")");
 			} else {
-				out.print(result);
+				out.print(ret);
 			}
 		} catch (UserException e) {
 			ResponseResult result = ResponseResult.newResult(ResponseResult.CODE_ERR,
 					e.getMessage());
-			logger.error("登录失败 ", e);
+			String ret = JsonUtils.toJSONString(result);
+			logger.error("登录失败 ", e.getMessage());
 			if (!StringUtils.isEmpty(callback)) {
-				out.write(callback + "(" + result + ")");
+				out.write(callback + "(" + ret + ")");
 			} else {
-				out.print(result);
+				out.print(ret);
 			}
 		}
 	}
@@ -77,9 +94,45 @@ public class UserController {
 	 * @param response
 	 * @return
 	 */
-	@RequestMapping("user/gotoLogin.do")
-	String gotoLogin(HttpServletRequest request, HttpServletResponse response) {
-		return "login";
+	@RequestMapping("user/loginpage.do")
+	String loginpage(HttpServletRequest request, HttpServletResponse response) {
+		// 从哪个链接进来登录页面
+		String redirect = request.getParameter("redirect");
+		request.setAttribute("redirect", redirect);
+		return "account/loginpage";
+	}
+
+	@RequestMapping("user/getuser.do")
+	void getuser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		setAjaxContentType(response);
+		PrintWriter out = response.getWriter();
+		String sid = request.getParameter("id");
+		// 内部id，一般是httpclient直接调用时使用
+		boolean inner = Boolean.valueOf(request.getParameter("inner"));
+		ResponseResult ret = null;
+		User user = null;
+		if (inner) {
+			try {
+				int id = Integer.valueOf(sid);
+				user = userService.getUserById(id);
+			} catch (Exception e) {
+				ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);
+			}
+		} else {
+			try {
+				user = userService.getUserById(sid);
+			} catch (UserException e) {
+				ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);
+			}
+		}
+		if (null == ret) {
+			if (null != user) {
+				ret = ResponseResult.newResult(ResponseResult.CODE_SUC, user.toPojo());
+			} else {
+				ret = ResponseResult.newResult(ResponseResult.CODE_NORET, user);
+			}
+		}
+		out.print(JsonUtils.toJSONString(ret));
 	}
 
 	/**
@@ -89,9 +142,8 @@ public class UserController {
 	 * @param response
 	 * @throws IOException
 	 */
-	@RequestMapping("user/checkRoleForUrl.do")
-	void checkRoleForUrl(HttpServletRequest request, HttpServletResponse response)
-			throws IOException {
+	@RequestMapping("user/checkrole.do")
+	void checkrole(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
 		String userId = request.getParameter("id");
@@ -111,34 +163,93 @@ public class UserController {
 
 	}
 
-	void getUserByToken(HttpServletRequest request, HttpServletResponse response) {
-
-	}
-
-	@RequestMapping
-	void getUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	@RequestMapping("user/getuserbytoken.do")
+	void getuserbytoken(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
 		setAjaxContentType(response);
 		PrintWriter out = response.getWriter();
-		// XmlUser5016237640858808320000378nufpoqdbsqvqslv11535795540430979
-		String id = request.getParameter("id");
-		User user = null;
+		String token = request.getParameter("token");
+		TbUser user = null;
 		try {
-			List<User> users = userService.getXmlUsers();
-			if (users.size() > 0) {
-				for (User u : users) {
-					logger.info(u.getOuterId());
-				}
-			}
-			user = userService.getUserById(id);
+			user = userService.getUserByToken(token);
 		} catch (UserException e) {
-			logger.error("获取用户失败:", e);
+			user = null;
 		}
-		JSONObject json = new JSONObject();
-		if (null != user) {
-			json.put("name", user.getName());
-			json.put("email", user.getEmail());
+		ResponseResult ret = null;
+		if (null == user) {
+			ret = ResponseResult.newResult(ResponseResult.CODE_NORET, "");
+		} else {
+			ret = ResponseResult.newResult(ResponseResult.CODE_SUC, user);
 		}
-		out.print("<h1>" + json.toString() + "</h1>");
+		String str = JsonUtils.toJSONString(ret);
+		out.print(str);
+
 	}
 
+	/**
+	 * jsonp请求导航条
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("nav/navbar.do")
+	void navbar(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		setAjaxContentType(response);
+		PrintWriter out = response.getWriter();
+		String token = request.getParameter(RemoteUserService.USER_TOKEN);
+		String callback = request.getParameter("callback");
+		User user = null;
+		try {
+			user = userService.getUserById(token);
+		} catch (UserException e) {
+			//Ignore
+		}
+		List<Menu> menus = navigator.getMenus(user);
+		ResponseResult ret = ResponseResult.newResult(ResponseResult.CODE_SUC, menus);
+		out.print(callback + "(" + JsonUtils.toJSONString(ret) + ")");
+		out.flush();
+		out.close();
+	}
+
+	/**
+	 * jsonp注册
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("/user/register")
+	void register(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		setAjaxContentType(response);
+		PrintWriter out = response.getWriter();
+		String callback = request.getParameter("callback");
+		String username = request.getParameter("username");
+		String password = request.getParameter("password");
+		TbUser user = new TbUser();
+		user.setName(username);
+		user.setPassword(password);
+		ResponseResult ret = null;
+		try {
+			User u = userService.register(user);
+			ret = ResponseResult.newResult(ResponseResult.CODE_SUC, u);
+			out.print(callback + "(" + JsonUtils.toJSONString(ret) + ")");
+		} catch (UserException e) {
+			logger.error("用户注册失败", e);
+			ret = ResponseResult.newResult(ResponseResult.CODE_ERR, e);
+		}
+	}
+
+	/**
+	 * sso系统注册页面
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("/account/register")
+	String accountregister(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		return "account/register";
+	}
 }

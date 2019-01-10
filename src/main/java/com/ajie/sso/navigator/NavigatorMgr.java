@@ -30,4 +30,6 @@ public interface NavigatorMgr {
 	List<Menu> getMenus();
 
 	public Menu getMenuById(int id);
+
+	void test();
 }

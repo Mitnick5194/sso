@@ -1,9 +1,10 @@
 package com.ajie.sso.user.simple;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.ajie.pojo.TbUser;
+import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.UserServiceExt;
 
@@ -37,10 +38,11 @@ public class XmlUser extends AbstractUser {
 		return password.equals(this.password);
 	}
 
-	
-
 	@Override
 	public List<Role> getRoles() {
+		if (null == roles) {
+			roles = new ArrayList<Role>();
+		}
 		return roles;
 	}
 

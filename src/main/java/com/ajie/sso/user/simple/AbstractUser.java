@@ -4,8 +4,8 @@ import java.util.Date;
 import java.util.List;
 
 import com.ajie.chilli.support.AbstractOuterIdSupport;
-import com.ajie.chilli.support.service.ServiceSupport;
-import com.ajie.pojo.TbUser;
+import com.ajie.chilli.support.service.ServiceDi;
+import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.user.Role;
 import com.ajie.sso.user.User;
@@ -14,12 +14,13 @@ import com.ajie.sso.user.enums.SexEnum;
 import com.ajie.sso.user.exception.UserException;
 
 /**
- * 用户抽象实现
+ * 用户抽象实现<br>
+ * 一些get方法如果子类没有输出，返回null不要抛异常，否则转换成json会失败的
  * 
  * @author ajie
  *
  */
-public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt> implements User {
+public abstract class AbstractUser extends ServiceDi<TbUser, UserServiceExt> implements User {
 
 	public AbstractUser(UserServiceExt serviceExt) {
 		super(serviceExt);
@@ -58,7 +59,7 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 	/**
 	 * 登录token
 	 */
-	protected String loginToken;
+	protected String token;
 
 	/** 外部id实例 */
 	protected OuterId outerIDInstance;
@@ -90,22 +91,22 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 
 	@Override
 	public String getNickName() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public String getSynopsis() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public SexEnum getSex() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public String getPhone() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
@@ -129,8 +130,13 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 	}
 
 	@Override
-	public String getLoginToken() {
-		return loginToken;
+	public String getToken() {
+		return token;
+	}
+
+	@Override
+	public void setToken(String token) {
+		this.token = token;
 	}
 
 	@Override
@@ -145,12 +151,12 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 
 	@Override
 	public boolean isLockUser() {
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	@Override
 	public boolean isRegisterVerification() {
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	@Override
@@ -160,7 +166,6 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 		}
 		List<Role> roles = getRoles();
 		roles.add(role);
-		setRoles(roles);
 	}
 
 	@Override
@@ -249,7 +254,7 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 
 	@Override
 	public String getHeader() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
@@ -273,6 +278,8 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 	}
 
 	public abstract List<Role> getRoles();
+
+	public abstract void setRoles(List<Role> roles);
 
 	@Override
 	public boolean checkRole(Role role) {
@@ -321,7 +328,10 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 	}
 
 	/**
-	 * 内部类实现外部ID支持，因为不能多继承，所以只能使用内部类实现了
+	 * 内部类实现外部ID支持，因为不能多继承，所以只能使用内部类实现了<br>
+	 * <p>
+	 * 注： 内部类继承一般需要重写getClassType()方法，不然getClassType()方法返回的是内部类的事例对象名
+	 * </p>
 	 * 
 	 * @author niezhenjie
 	 *
@@ -341,6 +351,14 @@ public abstract class AbstractUser extends ServiceSupport<TbUser, UserServiceExt
 		@Override
 		protected void setOuterId(String outerId) {
 			AbstractUser.this.outerId = outerId;
+		}
+
+		@Override
+		protected String getClassType() {
+			// 返回最终AbstractUser的子类
+			return AbstractUser.this.getClass().getSimpleName();
+			// return AbstractUser.class.getSimpleName(); //返回AbstractUser
+			// return getClass().getSimpleName(); //返回的是OuterId事例
 		}
 
 	}

@@ -14,44 +14,35 @@
 	<!-- 加载所有的配置文件 -->
 	<context:property-placeholder location="classpath:properties/*.properties" />
 
-	<!-- 连接池 -->
-	<bean class="com.alibaba.druid.pool.DruidDataSource" id="dataSource"
-		destroy-method="close">
-		<property name="driverClassName" value="${jdbc.driver}" />
-		<property name="url" value="${jdbc.url}" />
-		<property name="username" value="${jdbc.username}" />
-		<property name="password" value="${jdbc.passwd}" />
-		<property name="maxActive" value="10" />
-		<property name="minIdle" value="5" />
-	</bean>
-	<!-- 让spring管理sqlsessionfactory 使用mybatis和spring整合包中的 -->
-	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-		<!-- 数据库连接池 -->
-		<property name="dataSource" ref="dataSource" />
-		<!-- 加载mybatis的全局配置文件 -->
-		<property name="configLocation" value="classpath:mybatis/SqlMapperConfig.xml" />
+	<!-- 这个过滤器一定不能配在spring-mvc的spring文件中 -->
+	<bean id="
+			requestFilter " class="com.ajie.web.RequestFilter">
+		<property name="userService" ref="remoteUserService" />
+		<property name="encoding" value="utf-8" />
+		<property name="mode" value="intercept" />
+		<!-- <property name="uriList">
+			<list>
+				<value>/user/*</value>
+			</list>
+		</property> -->
+		<property name="loginURL" value="/res/login.do?ref=" />
 	</bean>
 
+	<!-- 用户模块远程支持 -->
+	<bean id="remoteUserService" class="com.ajie.web.impl.RemoteUserServiceImpl"></bean>
 
-	<!-- 扫描mapper包 注意 -->
-	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="basePackage" value="com.mapper" />
-	</bean>
 
 	<!-- 导航管理 -->
-	<bean id="navigatorMgr" class="com.ajie.sso.navigator.impl.NavigatorMgrImpl">
-		<property name="xmlFile" value="navigator.xml" />
-	</bean>
-	
-	
-	<context:component-scan base-package="com.member" />
-	
+	<!-- <bean id="navigatorMgr" class="com.ajie.sso.navigator.impl.NavigatorMgrImpl"> 
+		<property name="xmlFile" value="navigator.xml" /> </bean> -->
+
+	<context:component-scan base-package="com.ajie.sso.user" />
+	<context:component-scan base-package="com.ajie.sso.navigator" />
+	<context:annotation-config />
 	<!-- 用户服务 -->
-	<bean id="userService" class="com.ajie.sso.user.impl.UserServiceImpl">
-		<property name="navigatorService" ref="navigatorMgr" />
-		<property name="rolesData" value="role.xml" />
-		<property name="xmlUsersData" value="user.xml" />
-	</bean>
+	<!-- <bean id="userService" class="com.ajie.sso.user.impl.UserServiceImpl"> 
+		<property name="navigatorService" ref="navigatorMgr" /> <property name="rolesData" 
+		value="role.xml" /> <property name="xmlUsersData" value="user.xml" /> </bean> -->
 
 
 

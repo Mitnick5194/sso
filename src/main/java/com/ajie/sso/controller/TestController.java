@@ -15,25 +15,33 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import redis.clients.jedis.exceptions.JedisException;
+
 import com.ajie.chilli.utils.common.JsonUtils;
-import com.ajie.pojo.TbUser;
+import com.ajie.sso.navigator.NavigatorMgr;
 import com.ajie.sso.user.User;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
+import com.ajie.sso.user.simple.XmlUser;
+
 
 /**
+ * 测试用的 不用管
+ * 
  * @author niezhenjie
  */
-
+@SuppressWarnings("unused")
 @Controller
 public class TestController {
 
-	public TestController() {
-		System.out.println("TestController初始化");
-	}
-
 	@Resource
 	private UserService userService;
+
+	@Resource
+	private NavigatorMgr navigator;
+
+	@Resource
+	private RedisClient redisClient;
 
 	@RequestMapping(value = "/user/{id}/user.do", produces = "application/json;charset=UTF-8")
 	@ResponseBody
@@ -75,6 +83,7 @@ public class TestController {
 		response.setContentType("application/json;charset=UTF-8");
 		response.setCharacterEncoding("utf-8");
 		PrintWriter out = response.getWriter();
+		navigator.test();
 		Monkey monkey = new Monkey("King", 12);
 		Monkey father = new Monkey("SuperKing", 20);
 		monkey.setFather(father);
@@ -85,17 +94,65 @@ public class TestController {
 		friends.add(f1);
 		friends.add(f2);
 		friends.add(f3);
-		monkey.setFriends(friends);
-		System.out.println(JsonUtils.toJSONString(monkey));
-		out.print(JsonUtils.toJSONString(monkey));
+		monkey.friends = friends;
+		String ret = JsonUtils.toJSONString(monkey);
+		Monkey mk = JsonUtils.toBean(ret, Monkey.class);
+		out.print(ret);
 
 	}
 
 	@RequestMapping("/user/users")
 	public String getUSers(ModelMap model) {
+		XmlUser user = null;
+		try {
+			user = (XmlUser) userService
+					.getUserById("OuterId7225261377271919911196324acevfjmrgmtcorx31536220799784627");
+			String ret = JsonUtils.toJSONString(user);
+			XmlUser u = JsonUtils.toBean(ret, XmlUser.class);
+			System.out.println(ret);
+		} catch (UserException e1) {
+			e1.printStackTrace();
+		}
+		redisClient.set("testK", "testV");
+		try {
+			redisClient.set("testK2", user);
+			redisClient.hset("h1", "f1", "hash1");
+			redisClient.hset("h1", "f2", user);
+
+			// 取
+			String s = redisClient.get("testK");
+			XmlUser u = redisClient.getAsBean("testK2", XmlUser.class);
+			String s2 = redisClient.hget("h1", "f1");
+			XmlUser u2 = redisClient.hgetAsBean("h1", "f2", XmlUser.class);
+
+			System.out.println("s = " + s);
+			System.out.println("u1=" + u.toString());
+			System.out.println("s2 = " + s2);
+			System.out.println("u2 = " + u2.toString());
+
+		} catch (JedisException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		List<User> users = userService.getXmlUsers();
 		model.addAttribute("users", users);
 		return "user";
+	}
+
+	public static void main(String[] args) {
+		TbUser user = new TbUser();
+		/*user.setName("ajie");
+		user.setPassword("123");
+		user.setNickname("asdfasdf");
+		user.setCreatetime(new Date());
+		user.setLastactive(new Date());
+		String str = JsonUtils.toJSONString(user);
+		System.out.println(str);
+		TbUser tbu = JsonUtils.toBean(str, TbUser.class);
+		System.out.println(tbu.getName());
+		System.out.println(tbu.getCreatetime());*/
+		String ret = JsonUtils.toJSONString(user);
+		System.out.println(ret);
 	}
 
 }
@@ -146,4 +203,5 @@ class Monkey {
 	public void setFriends(List<Monkey> friends) {
 		this.friends = friends;
 	}
+
 }

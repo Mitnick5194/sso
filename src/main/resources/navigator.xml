@@ -7,20 +7,20 @@
 		<menu id="0x02" name="搞笑视频" index="/res/vedio.do">
 			<uri>/res/vedio.do</uri>
 		</menu>
-		<menu id="0x03" name="生活" index="/res/life.do">
+		<menu id="0x03" name="在线音乐" index="/res/life.do">
 			<uri>/res/life.do</uri>
 		</menu>
-		<menu id="0x04" name="乐趣" index="/res/instresting.do">
+		<menu id="0x04" name="NBA集锦" index="/res/instresting.do">
 			<uri>/res/instresting.do</uri>
 		</menu>
-		<menu id="0x05" name="h5小游戏" index="/res/h5Game.do">
+		<!-- <menu id="0x05" name="h5小游戏" index="/res/h5Game.do">
 			<uri>/res/h5Game.do</uri>
-		</menu>
+		</menu> -->
 		<menu id="0x06" name="服务器监控" index="res/serviceInfo.do">
 			<uri>/res/serviceInfo.do</uri>
 		</menu>
-		<menu id="0x07" name="登录" index="/res/login.do">
+		<!-- <menu id="0x07" name="登录" index="/res/login.do">
 			<uri>/res/login.do</uri>
-		</menu>
+		</menu> -->
 	</menus>
 </navigator>

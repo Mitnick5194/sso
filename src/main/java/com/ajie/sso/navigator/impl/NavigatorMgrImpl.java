@@ -1,40 +1,21 @@
 package com.ajie.sso.navigator.impl;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.ajie.chilli.utils.XmlHelper;
-import com.ajie.dao.mapper.TbLabelMapper;
-import com.ajie.dao.pojo.TbLabel;
-import com.ajie.sso.navigator.Menu;
 import com.ajie.sso.navigator.NavigatorMgr;
-import com.ajie.sso.navigator.simple.BaseMenu;
-import com.ajie.sso.user.Role;
-import com.ajie.sso.user.User;
 
 /**
  * @author niezhenjie
  */
 @Service
-public class NavigatorMgrImpl implements NavigatorMgr {
+public class NavigatorMgrImpl implements NavigatorMgr {/*
 	private static final Logger logger = LoggerFactory.getLogger(NavigatorMgrImpl.class);
 
-	/** 所有的菜单，从配置文件中初始化进来 */
+	*//** 所有的菜单，从配置文件中初始化进来 *//*
 	protected List<Menu> menus;
-	/** 显示用户有权限访问的菜单还是全部显示出来 */
+	*//** 显示用户有权限访问的菜单还是全部显示出来 *//*
 	protected boolean showAll;
-	/** 锁 */
+	*//** 锁 *//*
 	protected Object lock = new Object();
 
 	@Resource
@@ -172,4 +153,4 @@ public class NavigatorMgrImpl implements NavigatorMgr {
 		list.add("asdf");
 		System.out.println(list.size());
 	}
-}
+*/}

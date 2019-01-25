@@ -57,7 +57,7 @@
 	</filter-mapping>
 
 	<!-- 自定义的过滤器 -->
-	<filter>
+	<!-- <filter>
 		<filter-name>requestFilter</filter-name>
 		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
 		<init-param>
@@ -68,6 +68,6 @@
 	<filter-mapping>
 		<filter-name>requestFilter</filter-name>
 		<url-pattern>*.do</url-pattern>
-	</filter-mapping>
+	</filter-mapping> -->
 
 </web-app>

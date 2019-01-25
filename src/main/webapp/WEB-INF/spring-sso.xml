@@ -15,21 +15,23 @@
 	<context:property-placeholder location="classpath:properties/*.properties" />
 
 	<!-- 这个过滤器一定不能配在spring-mvc的spring文件中 -->
-	<bean id="
+	<!-- <bean id="
 			requestFilter " class="com.ajie.web.RequestFilter">
 		<property name="userService" ref="remoteUserService" />
 		<property name="encoding" value="utf-8" />
 		<property name="mode" value="intercept" />
-		<!-- <property name="uriList">
+		<property name="uriList">
 			<list>
 				<value>/user/*</value>
 			</list>
-		</property> -->
+		</property>
 		<property name="loginURL" value="/res/login.do?ref=" />
-	</bean>
+	</bean> -->
 
 	<!-- 用户模块远程支持 -->
-	<bean id="remoteUserService" class="com.ajie.web.impl.RemoteUserServiceImpl"></bean>
+	<bean id="remoteUserService" name="remoteUserService" class="com.ajie.sso.user.impl.RemoteUserServiceImpl">
+		<constructor-arg index="0" value="http://localhost:8081/" />
+	</bean>
 
 
 	<!-- 导航管理 -->
@@ -37,7 +39,7 @@
 		<property name="xmlFile" value="navigator.xml" /> </bean> -->
 
 	<context:component-scan base-package="com.ajie.sso.user" />
-	<context:component-scan base-package="com.ajie.sso.navigator" />
+	<!-- <context:component-scan base-package="com.ajie.sso.navigator" /> -->
 	<context:annotation-config />
 	<!-- 用户服务 -->
 	<!-- <bean id="userService" class="com.ajie.sso.user.impl.UserServiceImpl"> 

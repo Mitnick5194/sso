@@ -1,0 +1,1 @@
+mvn install:install-file -Dfile=D:\myworkspace\sso\target\user\sso-user.jar -DgroupId=com.ajie -DartifactId=sso-user -Dversion=1.0.10 -Dpackaging=jar

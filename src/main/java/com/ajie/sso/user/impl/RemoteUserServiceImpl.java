@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -23,8 +24,6 @@ import com.ajie.dao.redis.RedisClient;
 import com.ajie.sso.role.Role;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
-import com.alibaba.druid.support.json.JSONUtils;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
 /**
@@ -42,7 +41,7 @@ public class RemoteUserServiceImpl implements UserService {
 	private String ssohost;
 
 	/**
-	 * redis客户端服务
+	 * 本系统redis客户端服务
 	 */
 	@Resource
 	protected RedisClient redisClient;
@@ -58,6 +57,7 @@ public class RemoteUserServiceImpl implements UserService {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("name", name);
 		params.put("password", passwd);
+		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
 		try {
@@ -78,10 +78,10 @@ public class RemoteUserServiceImpl implements UserService {
 
 	@Override
 	public TbUser update(TbUser tbUser) throws UserException {
-
 		String url = genUrl("update");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("user", JsonUtils.toJSONString(tbUser));
+		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
 		try {
@@ -108,6 +108,7 @@ public class RemoteUserServiceImpl implements UserService {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("key", key);
 		params.put("password", password);
+		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
 		try {
@@ -127,10 +128,11 @@ public class RemoteUserServiceImpl implements UserService {
 	}
 
 	@Override
-	public TbUser loginByToken(String token) throws UserException {
+	public TbUser getUserByToken(String token) throws UserException {
 		String url = genUrl("loginbytoken");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserService.REQUEST_TOKEN_KEY, token);
+		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
 		try {
@@ -153,10 +155,47 @@ public class RemoteUserServiceImpl implements UserService {
 	}
 
 	@Override
-	public TbUser getUserById(String id) {
-		String url = genUrl("getuserbyid");
+	public TbUser getUser(HttpServletRequest request) {
+		Cookie[] cookies = request.getCookies();
+		String key = "";
+		for (Cookie cookie : cookies) {
+			String name = cookie.getName();
+			if (UserService.COOKIE_KEY.equals(name)) {
+				key = cookie.getValue();
+			}
+		}
+		TbUser user = null;
+		// 先从本系统缓存里取
+		if (null != redisClient) {
+			try {
+				user = redisClient.hgetAsBean(REDIS_PREFIX, key, TbUser.class);
+			} catch (JedisException e) {
+				// 重试
+				try {
+					user = redisClient.hgetAsBean(REDIS_PREFIX, key, TbUser.class);
+				} catch (JedisException e1) {
+					logger.info("重试仍失败", e1);
+				}
+			}
+			if (null != user)
+				return user;// 找到了
+		}
+
+		// 本地缓存没有，到远程sso系统里找吧
+		try {
+			return getUserByToken(key);
+		} catch (UserException e) {
+			logger.error("", e);
+		}
+		return null;
+	}
+
+	@Override
+	public TbUser getUserById(int id) {
+		String url = genUrl("user");
+		url += "/" + id;
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("id", id);
+		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
 		try {
@@ -184,6 +223,7 @@ public class RemoteUserServiceImpl implements UserService {
 		String url = genUrl("getuserbyname");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("name", name);
+		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
 		try {
@@ -210,6 +250,7 @@ public class RemoteUserServiceImpl implements UserService {
 		String url = genUrl("getuserbyname");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("email", email);
+		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
 		try {
@@ -236,6 +277,7 @@ public class RemoteUserServiceImpl implements UserService {
 		String url = genUrl("getuserbyname");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("phone", phone);
+		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
 		try {
@@ -327,6 +369,14 @@ public class RemoteUserServiceImpl implements UserService {
 		} catch (UserException e) {
 		}
 		return false;
+	}
 
+	/**
+	 * 远程请求识别参数，用于控制器识别返回不同类型的结果
+	 * 
+	 * @param params
+	 */
+	private void remoteHeader(Map<String, String> params) {
+		params.put("reqType", "remote");
 	}
 }

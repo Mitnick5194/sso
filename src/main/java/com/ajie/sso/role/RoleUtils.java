@@ -9,7 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ajie.chilli.utils.Toolkits;
+import com.ajie.chilli.utils.common.JsonUtils;
 import com.ajie.chilli.utils.common.StringUtils;
+import com.ajie.chilli.utils.common.URLUtil;
+import com.ajie.dao.pojo.TbUser;
 
 /**
  *
@@ -20,6 +23,12 @@ import com.ajie.chilli.utils.common.StringUtils;
 public class RoleUtils {
 	private static final Logger logger = LoggerFactory.getLogger(RoleUtils.class);
 
+	/**
+	 * 加载权限表
+	 * 
+	 * @param doc
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public static List<Role> loadRoles(Document doc) {
 		Element root = doc.getRootElement();
@@ -62,5 +71,26 @@ public class RoleUtils {
 		if (haserr)
 			logger.error("加载权限表有错误，错误项已被忽略加载");
 		return roles;
+	}
+
+	/**
+	 * user是否有权限访问url
+	 * 
+	 * @param user
+	 * @param url
+	 * @return
+	 */
+	public static boolean checkRole(TbUser user, String url) {
+		if (null == user)
+			return false;
+		String roleids = user.getRoleids();
+		List<Role> list = JsonUtils.toList(roleids, Role.class);
+		for (Role role : list) {
+			List<String> urls = role.getUrls();
+			if (URLUtil.matchs(urls, url)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

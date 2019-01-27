@@ -7,11 +7,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ajie.chilli.common.ResponseResult;
 import com.ajie.dao.pojo.TbUser;
+import com.ajie.sso.controller.vo.UserVo;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
 
@@ -29,15 +31,29 @@ public class UserController {
 	@Resource
 	private UserService remoteUserService;
 
+	@RequestMapping("/gotologin")
+	public String gotologin(HttpServletRequest request, HttpServletResponse response) {
+		String ref = request.getParameter("ref");
+		request.setAttribute("ref", ref);
+		return "login";
+	}
+
 	@ResponseBody
 	@RequestMapping("/register")
 	public ResponseResult register(HttpServletRequest request, HttpServletResponse response) {
 		String name = request.getParameter("name");
 		String password = request.getParameter("password");
+		// 请求类型，远程还是本系统
+		String reqType = request.getParameter("reqType");
 		ResponseResult result = null;
 		try {
 			TbUser user = userService.register(name, password, request, response);
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+			if ("remote".equals(reqType)) {
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+			} else {
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
+			}
+
 		} catch (UserException e) {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
 		}
@@ -50,11 +66,51 @@ public class UserController {
 		String key = request.getParameter("key");
 		String password = request.getParameter("password");
 		ResponseResult result = null;
+		// 请求类型，远程还是本系统
+		String reqType = request.getParameter("reqType");
 		try {
 			TbUser user = userService.login(key, password, request, response);
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+			if ("remote".equals(reqType)) {
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+			} else {
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
+			}
 		} catch (UserException e) {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+		}
+		return result;
+	}
+
+	/**
+	 * 测试使用request获取用户
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping
+	public void getuser(HttpServletRequest request, HttpServletResponse response) {
+		TbUser user = userService.getUser(request);
+		TbUser user2 = remoteUserService.getUser(request);
+		System.out.println(user.getId());
+		System.out.println(user2.getId());
+	}
+
+	@ResponseBody
+	@RequestMapping("/user/{id}")
+	public ResponseResult getuserbyid(@PathVariable("id") Integer id, HttpServletRequest request,
+			HttpServletResponse response) {
+		ResponseResult result = null;
+		// 请求类型，远程还是本系统
+		String reqType = request.getParameter("reqType");
+		TbUser user = userService.getUserById(id);
+		if (null == user) {
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, "用户不存在");
+		} else if ("remote".equals(reqType)) {
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+		} else {
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
 		}
 		return result;
 	}
@@ -80,16 +136,18 @@ public class UserController {
 		String token = request.getParameter(UserService.REQUEST_TOKEN_KEY);
 		ResponseResult result = null;
 		try {
-			TbUser user = userService.loginByToken(token);
+			TbUser user = userService.getUserByToken(token);
 			if (null != user)
 				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
 			else
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC,null);
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC, null);
 		} catch (UserException e) {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
 		}
 		return result;
 	}
+
+	/*********** 以下为测试远程 ***************/
 
 	@ResponseBody
 	@RequestMapping("/remoteloginbytoken")
@@ -98,7 +156,7 @@ public class UserController {
 		String token = request.getParameter(UserService.REQUEST_TOKEN_KEY);
 		ResponseResult result = null;
 		try {
-			TbUser user = remoteUserService.loginByToken(token);
+			TbUser user = remoteUserService.getUserByToken(token);
 			result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
 		} catch (UserException e) {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());

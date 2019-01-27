@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -66,7 +67,9 @@ public class UserServiceImpl implements UserService {
 			throw new UserException("注册失败，用户名为空");
 		if (null == passwd)
 			throw new UserException("注册失败，密码为空");
-		TbUser user = new TbUser(name, passwd);
+		// 密码加密
+		String enc = Toolkits.md5Password(passwd);
+		TbUser user = new TbUser(name, enc);
 		List<Role> roles = Collections.singletonList(Role._Nil);// todo
 		user.setRoleids(JsonUtils.toJSONString(roles));
 		userMapper.insert(user);
@@ -106,17 +109,21 @@ public class UserServiceImpl implements UserService {
 		TbUserExample ex = new TbUserExample();
 		Criteria criteria = ex.createCriteria();
 		criteria.andNameEqualTo(key);
-		/*Criteria criteria2 = ex.createCriteria();
-		criteria.andEmailEqualTo(key);
-		Criteria criteria3 = ex.createCriteria();
-		criteria.andPhoneEqualTo(key);
-		ex.or(criteria);
+		// ex.or(criteria);
+		Criteria criteria2 = ex.createCriteria();
 		ex.or(criteria2);
-		ex.or(criteria3);*/
+		criteria2.andEmailEqualTo(key);
+		Criteria criteria3 = ex.createCriteria();
+		criteria3.andPhoneEqualTo(key);
+		ex.or(criteria3);
 		List<TbUser> users = userMapper.selectByExample(ex);
 		if (users.size() != 1)
 			throw new UserException("登录失败，用户名或密码错误");
 		TbUser user = users.get(0);
+		password = Toolkits.md5Password(password);
+		if (!user.contrastPassword(password)) {
+			throw new UserException("密码错误");
+		}
 		String randkey = Toolkits.genRandomStr(32);
 		boolean issuc = false;
 		try {
@@ -136,7 +143,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public TbUser loginByToken(String token) throws UserException {
+	public TbUser getUserByToken(String token) throws UserException {
 		if (null == token)
 			return null;
 		TbUser user = null;
@@ -149,7 +156,25 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public TbUser getUserById(String sid) {
+	public TbUser getUser(HttpServletRequest request) {
+		Cookie[] cookies = request.getCookies();
+		String key = "";
+		for (Cookie cookie : cookies) {
+			String name = cookie.getName();
+			if (UserService.COOKIE_KEY.equals(name)) {
+				key = cookie.getValue();
+			}
+		}
+		try {
+			TbUser user = getUserFromRedis(key);
+			return user;
+		} catch (JedisException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public TbUser getUserById(int sid) {
 		int id = 0;
 		try {
 			id = Integer.valueOf(sid);

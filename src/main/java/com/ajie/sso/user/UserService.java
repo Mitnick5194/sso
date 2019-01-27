@@ -83,7 +83,9 @@ public interface UserService {
 	 * @return
 	 * @throws UserException
 	 */
-	TbUser loginByToken(String token) throws UserException;
+	TbUser getUserByToken(String token) throws UserException;
+
+	TbUser getUser(HttpServletRequest request);
 
 	/**
 	 * 根据id获取用户
@@ -91,7 +93,7 @@ public interface UserService {
 	 * @param id
 	 * @return
 	 */
-	TbUser getUserById(String id);
+	TbUser getUserById(int id);
 
 	/***
 	 * 根据用户名获取用户

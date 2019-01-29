@@ -47,7 +47,7 @@ public interface UserService {
 	public final static KVpair LOGIN_STATE_ONLINE = KVpair.valueOf("在线", 1 << 3);
 	/** 登录状态 -- 离线 */
 	public final static KVpair LOGIN_STATE_OUTLINE = KVpair.valueOf("离线", 1 << 4);
-
+	
 	/**
 	 * 注册
 	 * 

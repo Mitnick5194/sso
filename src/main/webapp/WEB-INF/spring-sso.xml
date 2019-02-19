@@ -15,7 +15,7 @@
 	<context:property-placeholder location="classpath:properties/*.properties" />
 
 	<!-- 这个过滤器一定不能配在spring-mvc的spring文件中 -->
-	<!-- <bean id="
+	<bean id="
 			requestFilter " class="com.ajie.web.RequestFilter">
 		<property name="userService" ref="remoteUserService" />
 		<property name="encoding" value="utf-8" />
@@ -25,12 +25,18 @@
 				<value>/user/*</value>
 			</list>
 		</property>
-		<property name="loginURL" value="/res/login.do?ref=" />
-	</bean> -->
+		<property name="ssoHost" value="${sso-host}" />
+	</bean>
 
 	<!-- 用户模块远程支持 -->
-	<bean id="remoteUserService" name="remoteUserService" class="com.ajie.sso.user.impl.RemoteUserServiceImpl">
+	<bean id="remoteUserService" name="remoteUserService"
+		class="com.ajie.sso.user.impl.RemoteUserServiceImpl">
 		<constructor-arg index="0" value="http://localhost:8081/" />
+	</bean>
+
+	<!-- 用户默认头像路径 -->
+	<bean class="java.lang.String" id="userDefalutHeader">
+		<constructor-arg index="0" value="${defalut-user-header}" />
 	</bean>
 
 

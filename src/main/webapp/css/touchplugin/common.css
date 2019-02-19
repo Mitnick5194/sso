@@ -1,0 +1,253 @@
+@charset "utf-8";
+/*************下面公共部分*************/
+.clearfix{
++margin-top: 10px;
+}
+/*默认背景色*/
+body {
+	font-family: Microsoft YaHei,微软雅黑,Arial, Simsun, sans-serif;
+	margin: 0 auto;
+	padding:0 10px;
+	font-size: 14px;
+	color: #606267;
+	background-color: #FFFFFF;
+}
+
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,hr,pre,code,form,select,fieldset,legend,input,button,textarea,p,blockquote,th,td
+	{
+	margin: 0;
+	padding: 0;
+}
+
+*:focus {
+	outline: none;
+}
+/* 设置table 的样式*/
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	empty-cells: show; /*td没有内容，也显示*/
+	border: 0 none;
+}
+
+fieldset,img,a img {
+	border: 0 none;
+}
+
+ul,li {
+	list-style: none outside none;
+}
+
+a {
+	text-decoration: none;
+	color: #1280C8;
+}
+
+a:hover {
+	color: #0A39C6;
+}
+
+td {
+	word-break: break-all; /*强制换行*/
+}
+
+th,td {
+	border: 1px solid #D8DEE7;
+}
+
+th {
+	font-size: 14px;
+	color: #FFFFFF;
+	background-color: #33b6ae;
+}
+
+input[type="text"] {
+	border: 1px solid #999;
+}
+
+input[type="text"]:focus {
+	border: 1px solid #33b6ae;
+	box-shadow: 0 0 3px 0px #33b6ae;
+}
+
+textarea:focus {
+	border: 1px solid #33b6ae;
+	box-shadow: 0 0 3px 0px #33b6ae;
+}
+
+select {
+	line-height: 18px;
+	color: #546478;
+	padding-left: 2px;
+}
+
+.emptymsg {
+	color: #CA1717;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.dy_none {
+	display: none;
+}
+/** 强制不换行*/
+.nowrap {
+	white-space: nowrap;
+}
+
+/*清浮动*/
+.clearfix:after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
+.clearfix {
+	zoom: 1;
+}
+
+/*************下面参考资料*************/
+.fl {
+	float: left;
+}
+
+.fr {
+	float: right;
+}
+/*用常字体*/
+.songti {
+	font-family: SimSun, sans-serif;
+}
+
+.yahei {
+	font-family: 'Microsoft Yahei', SimSun, sans-serif;
+}
+
+.heiti {
+	font-family: SimHei, SimSun, sans-serif;
+}
+
+.lishu {
+	font-family: LiSu, SimSun, sans-serif;
+}
+/*字体属性*/
+.ft_12 {
+	font-size: 12px;
+}
+
+.ft_14 {
+	font-size: 14px;
+}
+
+.ft_16 {
+	font-size: 16px;
+}
+
+.ft_bold {
+	font-weight: bold;
+}
+/*对齐方式*/
+.al_left {
+	text-align: left;
+}
+
+.al_center {
+	text-align: center;
+}
+
+.al_right {
+	text-align: right;
+}
+
+/*************整体布局*************/
+.comwidth {
+	margin: 0 auto;
+	width: 960px;
+}
+
+.left {
+	width: 175px;
+	font-size: 14px;
+	float: left;
+	min-height:700px;
+}
+
+.right {
+	font-size: 12px;
+	color: #201e1e;
+	float: right;
+	background: #FFFFFF;
+	min-height: 740px;
+}
+
+/*底部栏样式*/
+.footer_div {
+	width: 100%;
+	height: 45px;
+	background-color: #e2e2e2;
+	font-size: 16px;
+	color: #201e1e;
+	text-align: center;
+}
+
+.footer_div a {
+	color: #201e1e;
+	font-size: 14px;
+}
+
+.tr_hover {
+	background-color: #e1f9f9;
+}
+
+/* 弹出框关闭按钮 */
+.to_close {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+	background: url(/wx/images/diaclose_1.png) no-repeat;
+	margin-top: 2px;
+	*marin-top: 0px;
+	_margin-top: 0px;
+	_background: none;
+	_filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src="/wx//images/diaclose_1.png",
+		sizingMethod="crop");
+}
+
+.to_close:hover {
+	background: url(/images/diaclose_2.png) no-repeat;
+	_background: none;
+	_filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src="/wx//images/diaclose_2.png",
+		sizingMethod="crop");
+}
+
+.tb_main{
+	width:100%;
+	min-height:500px;
+}
+
+.tb_main td{
+	border:none;
+}
+.tbm_left{
+	vertical-align:top;
+	width:175px;
+	background: #f1f3f6;
+}
+
+.tbm_right{
+	vertical-align:top;
+	padding:0px 15px 0px;
+	min-width:600px;
+}
+
+.btn_enter{
+	height: 38px;
+	line-height: 38px;
+	border: 1px solid #33B6AE;
+	background-color: #33B6AE;
+	color: #FFFFFF;
+}
+.btn_enter:hover{
+	opacity: 0.8;
+}

@@ -6,12 +6,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ajie.chilli.common.ResponseResult;
+import com.ajie.chilli.utils.Toolkits;
+import com.ajie.chilli.utils.common.StringUtils;
 import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.controller.vo.UserVo;
 import com.ajie.sso.user.UserService;
@@ -31,46 +33,119 @@ public class UserController {
 	@Resource
 	private UserService remoteUserService;
 
-	@RequestMapping("/gotologin")
+	/**
+	 * 登录页
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping("/login")
 	public String gotologin(HttpServletRequest request, HttpServletResponse response) {
 		String ref = request.getParameter("ref");
 		request.setAttribute("ref", ref);
 		return "login";
 	}
 
+	/**
+	 * 用户信息页
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping("/userinfo")
+	public String userinfo(HttpServletRequest request, HttpServletResponse response) {
+		String id = request.getParameter("id");
+		request.setAttribute("id", id);
+		return "userinfo";
+	}
+
+	/**
+	 * 临时用的
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping("/index")
+	public String index(HttpServletRequest request, HttpServletResponse response) {
+		return "index";
+	}
+
+	/**
+	 * 注册
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	@ResponseBody
 	@RequestMapping("/register")
-	public ResponseResult register(HttpServletRequest request, HttpServletResponse response) {
-		String name = request.getParameter("name");
+	public Object register(HttpServletRequest request, HttpServletResponse response) {
+		String name = request.getParameter("key");
 		String password = request.getParameter("password");
-		// 请求类型，远程还是本系统
-		String reqType = request.getParameter("reqType");
+		String callback = request.getParameter("callback");
 		ResponseResult result = null;
 		try {
 			TbUser user = userService.register(name, password, request, response);
-			if ("remote".equals(reqType)) {
+			if (isRemote(request)) {
 				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
 			} else {
 				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
 			}
-
 		} catch (UserException e) {
+			logger.error("用户注册失败", e);
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+		} catch (RuntimeException e) {
+			logger.error("用户注册失败", e);
+			result = ResponseResult.newResult(ResponseResult.CODE_ERR, "注册失败");
 		}
-		return result;
+		if (null == callback) {
+			return result;
+		}
+		MappingJacksonValue jsonp = new MappingJacksonValue(result);
+		jsonp.setJsonpFunction(callback);
+		return jsonp;
+	}
+
+	/**
+	 * 校验用户名是否已使用
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/verifyusername")
+	public Object verifyusername(HttpServletRequest request, HttpServletResponse response) {
+		String name = request.getParameter("name");
+		String callback = request.getParameter("callback");// jsonp回调
+		ResponseResult result = null;
+		TbUser user = userService.getUserByName(name);
+		if (null != user) {
+			result = ResponseResult.newResult(ResponseResult.CODE_ERR, "用户名已存在");
+		} else {
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null);
+		}
+		if (null == callback) {
+			return result;
+		}
+		MappingJacksonValue jsonp = new MappingJacksonValue(result);
+		jsonp.setJsonpFunction(callback);
+		return jsonp;
 	}
 
 	@ResponseBody
-	@RequestMapping("/login")
-	public ResponseResult login(HttpServletRequest request, HttpServletResponse response) {
+	@RequestMapping("/dologin")
+	public ResponseResult dologin(HttpServletRequest request, HttpServletResponse response) {
 		String key = request.getParameter("key");
 		String password = request.getParameter("password");
+		String callback = request.getParameter("callback");
 		ResponseResult result = null;
-		// 请求类型，远程还是本系统
-		String reqType = request.getParameter("reqType");
 		try {
 			TbUser user = userService.login(key, password, request, response);
-			if ("remote".equals(reqType)) {
+			if (isRemote(request)) {
 				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
 			} else {
 				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
@@ -78,6 +153,11 @@ public class UserController {
 		} catch (UserException e) {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
 		}
+		if (null == callback) {
+			return result;
+		}
+		MappingJacksonValue jsonp = new MappingJacksonValue(result);
+		jsonp.setJsonpFunction(callback);
 		return result;
 	}
 
@@ -89,7 +169,7 @@ public class UserController {
 	 * @return
 	 */
 	@ResponseBody
-	@RequestMapping
+	@RequestMapping("/getuser")
 	public void getuser(HttpServletRequest request, HttpServletResponse response) {
 		TbUser user = userService.getUser(request);
 		TbUser user2 = remoteUserService.getUser(request);
@@ -98,17 +178,16 @@ public class UserController {
 	}
 
 	@ResponseBody
-	@RequestMapping("/user/{id}")
-	public ResponseResult getuserbyid(@PathVariable("id") Integer id, HttpServletRequest request,
-			HttpServletResponse response) {
+	@RequestMapping("/getuserbyid")
+	public ResponseResult getuserbyid(HttpServletRequest request, HttpServletResponse response) {
+		int id = Toolkits.toInt(request.getParameter("id"), 0);
 		ResponseResult result = null;
-		// 请求类型，远程还是本系统
-		String reqType = request.getParameter("reqType");
 		TbUser user = userService.getUserById(id);
 		if (null == user) {
 			result = ResponseResult.newResult(ResponseResult.CODE_SUC, "用户不存在");
-		} else if ("remote".equals(reqType)) {
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+		} else if (isRemote(request)) {
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null,/*user.getToken()*/
+					user);
 		} else {
 			result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
 		}
@@ -123,7 +202,8 @@ public class UserController {
 		ResponseResult result = null;
 		try {
 			TbUser user = remoteUserService.login(key, password, request, response);
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null/*user.getToken()*/,
+					user);
 		} catch (UserException e) {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
 		}
@@ -157,11 +237,19 @@ public class UserController {
 		ResponseResult result = null;
 		try {
 			TbUser user = remoteUserService.getUserByToken(token);
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null/*user.getToken()*/,
+					user);
 		} catch (UserException e) {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
 		}
 		return result;
+	}
+
+	private boolean isRemote(HttpServletRequest request) {
+		String header = request.getHeader(UserService.REMOTE_SERVER_INVOKE_KEY);
+		if (StringUtils.eq(header, UserService.REMOTE_SERVER_INVOKE_TOKEN))
+			return true;
+		return false;
 	}
 
 	/*

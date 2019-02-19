@@ -16,7 +16,7 @@
 	<!-- 由spring注册系统模块 -->
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
-		<param-value>/WEB-INF/spring-sso.xml,/WEB-INF/spring-dao.xml,/WEB-INF/spring-redis.xml</param-value>
+		<param-value>/WEB-INF/spring-sso.xml,/WEB-INF/spring-dao.xml,/WEB-INF/spring-redis.xml,/WEB-INF/spring-tran.xml</param-value>
 	</context-param>
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
@@ -57,7 +57,7 @@
 	</filter-mapping>
 
 	<!-- 自定义的过滤器 -->
-	<!-- <filter>
+	<filter>
 		<filter-name>requestFilter</filter-name>
 		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
 		<init-param>
@@ -68,6 +68,16 @@
 	<filter-mapping>
 		<filter-name>requestFilter</filter-name>
 		<url-pattern>*.do</url-pattern>
-	</filter-mapping> -->
+	</filter-mapping>
+	
+		<error-page>
+		<error-code>403</error-code>
+		<location>/403.jsp</location>
+	</error-page>
+		<error-page>
+		<error-code>500</error-code>
+		<location>/500.jsp</location>
+	</error-page>
+	
 
 </web-app>

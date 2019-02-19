@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.ajie.chilli.cache.redis.RedisClient;
+import com.ajie.chilli.cache.redis.RedisException;
 import com.ajie.chilli.common.enums.SexEnum;
 import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.XmlHelper;
@@ -25,8 +27,6 @@ import com.ajie.dao.mapper.TbUserMapper;
 import com.ajie.dao.pojo.TbUser;
 import com.ajie.dao.pojo.TbUserExample;
 import com.ajie.dao.pojo.TbUserExample.Criteria;
-import com.ajie.dao.redis.JedisException;
-import com.ajie.dao.redis.RedisClient;
 import com.ajie.sso.role.Role;
 import com.ajie.sso.role.RoleUtils;
 import com.ajie.sso.user.UserService;
@@ -60,6 +60,10 @@ public class UserServiceImpl implements UserService {
 	 */
 	protected List<Role> roles;
 
+	/** 用户默认头像路径 */
+	@Resource
+	private String user_defalut_header;
+
 	@Override
 	public TbUser register(String name, String passwd, HttpServletRequest request,
 			HttpServletResponse response) throws UserException {
@@ -70,17 +74,18 @@ public class UserServiceImpl implements UserService {
 		// 密码加密
 		String enc = Toolkits.md5Password(passwd);
 		TbUser user = new TbUser(name, enc);
-		List<Role> roles = Collections.singletonList(Role._Nil);// todo
+		user.setHeader(user_defalut_header);
+		List<Role> roles = Collections.singletonList(Role._Nil);// TODO
 		user.setRoleids(JsonUtils.toJSONString(roles));
 		userMapper.insert(user);
 		String key = Toolkits.genRandomStr(32);
 		boolean issuc = false;
 		try {
 			issuc = putintoRedis(key, user);
-		} catch (JedisException e) {
+		} catch (RedisException e) {
 			try {
 				issuc = putintoRedis(key, user);// 重试
-			} catch (JedisException e1) {
+			} catch (RedisException e1) {
 				logger.warn("添加redis缓存失败", e1);
 			}
 		}
@@ -128,10 +133,10 @@ public class UserServiceImpl implements UserService {
 		boolean issuc = false;
 		try {
 			issuc = putintoRedis(randkey, user);
-		} catch (JedisException e) {
+		} catch (RedisException e) {
 			try {
 				issuc = putintoRedis(randkey, user);// 重试
-			} catch (JedisException e1) {
+			} catch (RedisException e1) {
 				logger.warn("添加redis缓存失败", e1);
 			}
 		}
@@ -139,6 +144,7 @@ public class UserServiceImpl implements UserService {
 			setCookie(request, response, randkey);
 			user.setToken(randkey);
 		}
+		logger.info("增加会话：" + user.toString());
 		return user;
 	}
 
@@ -149,7 +155,7 @@ public class UserServiceImpl implements UserService {
 		TbUser user = null;
 		try {
 			user = getUserFromRedis(token);
-		} catch (JedisException e) {
+		} catch (RedisException e) {
 			logger.warn("无法从redis中加载TbUser,token=" + token, e);
 		}
 		return user;
@@ -168,7 +174,7 @@ public class UserServiceImpl implements UserService {
 		try {
 			TbUser user = getUserFromRedis(key);
 			return user;
-		} catch (JedisException e) {
+		} catch (RedisException e) {
 			return null;
 		}
 	}
@@ -189,9 +195,9 @@ public class UserServiceImpl implements UserService {
 	public TbUser getUserByName(String name) {
 		TbUserExample ex = new TbUserExample();
 		Criteria criteria = ex.createCriteria();
-		criteria.andEmailEqualTo(name);
+		criteria.andNameEqualTo(name);
 		List<TbUser> users = userMapper.selectByExample(ex);
-		if (null == users || users.size() > 1) {
+		if (null == users || users.isEmpty() || users.size() > 1) {
 			return null;
 		}
 		return users.get(0);
@@ -203,7 +209,7 @@ public class UserServiceImpl implements UserService {
 		Criteria criteria = ex.createCriteria();
 		criteria.andEmailEqualTo(email);
 		List<TbUser> users = userMapper.selectByExample(ex);
-		if (null == users || users.size() > 1) {
+		if (null == users || users.isEmpty() || users.size() > 1) {
 			return null;
 		}
 		return users.get(0);
@@ -213,9 +219,9 @@ public class UserServiceImpl implements UserService {
 	public TbUser getUserByPhone(String phone) {
 		TbUserExample ex = new TbUserExample();
 		Criteria criteria = ex.createCriteria();
-		criteria.andEmailEqualTo(phone);
+		criteria.andPhoneEqualTo(phone);
 		List<TbUser> users = userMapper.selectByExample(ex);
-		if (null == users || users.size() > 1) {
+		if (null == users || users.isEmpty() || users.size() > 1) {
 			return null;
 		}
 		return users.get(0);
@@ -227,14 +233,14 @@ public class UserServiceImpl implements UserService {
 		return null;
 	}
 
-	private boolean putintoRedis(String key, TbUser user) throws JedisException {
+	private boolean putintoRedis(String key, TbUser user) throws RedisException {
 		boolean b = false;
 		redisClient.hset(REDIS_PREFIX, key, user);
 		b = true;
 		return b;
 	}
 
-	private TbUser getUserFromRedis(String key) throws JedisException {
+	private TbUser getUserFromRedis(String key) throws RedisException {
 		TbUser user = redisClient.hgetAsBean(REDIS_PREFIX, key, TbUser.class);
 		return user;
 	}
@@ -282,5 +288,9 @@ public class UserServiceImpl implements UserService {
 		long end = System.currentTimeMillis();
 		logger.info("已从配置文件中初始化了用户数据 , 耗时 " + (end - start) + " ms");
 
+	}
+
+	public void setUserDefaultHeader(String header) {
+		this.user_defalut_header = header;
 	}
 }

@@ -14,13 +14,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ajie.chilli.cache.redis.RedisClient;
+import com.ajie.chilli.cache.redis.RedisException;
 import com.ajie.chilli.common.ResponseResult;
 import com.ajie.chilli.common.enums.SexEnum;
 import com.ajie.chilli.utils.HttpClientUtil;
 import com.ajie.chilli.utils.common.JsonUtils;
 import com.ajie.dao.pojo.TbUser;
-import com.ajie.dao.redis.JedisException;
-import com.ajie.dao.redis.RedisClient;
 import com.ajie.sso.role.Role;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
@@ -57,16 +57,16 @@ public class RemoteUserServiceImpl implements UserService {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("name", name);
 		params.put("password", passwd);
-		remoteHeader(params);
 		ResponseResult res = null;
 		String result = "";
+		Map<String, String> header = remoteHeader();
 		try {
-			result = HttpClientUtil.doGet(url, params);
+			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
 			// 重试
 			try {
-				result = HttpClientUtil.doGet(url, params);
+				result = HttpClientUtil.doGet(url, params, header);
 				res = getResponse(result);
 			} catch (IOException e1) {
 				logger.error("注册失败" + e1);
@@ -81,19 +81,19 @@ public class RemoteUserServiceImpl implements UserService {
 		String url = genUrl("update");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("user", JsonUtils.toJSONString(tbUser));
-		remoteHeader(params);
+		Map<String, String> header = remoteHeader();
 		ResponseResult res = null;
 		String result = "";
 		try {
-			result = HttpClientUtil.doGet(url, params);
+			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
 			// 重试
 			try {
-				result = HttpClientUtil.doGet(url, params);
+				result = HttpClientUtil.doGet(url, params, header);
 				res = getResponse(result);
 			} catch (IOException e1) {
-				logger.error("注册失败" + e1);
+				logger.error("更新用户失败" + e1);
 			}
 		}
 		assertResponse(res);
@@ -108,19 +108,19 @@ public class RemoteUserServiceImpl implements UserService {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("key", key);
 		params.put("password", password);
-		remoteHeader(params);
+		Map<String, String> header = remoteHeader();
 		ResponseResult res = null;
 		String result = "";
 		try {
-			result = HttpClientUtil.doGet(url, params);
+			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
 			// 重试
 			try {
-				result = HttpClientUtil.doGet(url, params);
+				result = HttpClientUtil.doGet(url, params, header);
 				res = getResponse(result);
 			} catch (IOException e1) {
-				logger.error("注册失败" + e1);
+				logger.error("登录失败" + e1);
 			}
 		}
 		assertResponse(res);
@@ -132,16 +132,16 @@ public class RemoteUserServiceImpl implements UserService {
 		String url = genUrl("loginbytoken");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserService.REQUEST_TOKEN_KEY, token);
-		remoteHeader(params);
+		Map<String, String> header = remoteHeader();
 		ResponseResult res = null;
 		String result = "";
 		try {
-			result = HttpClientUtil.doGet(url, params);
+			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
 			// 重试
 			try {
-				result = HttpClientUtil.doGet(url, params);
+				result = HttpClientUtil.doGet(url, params, header);
 				res = getResponse(result);
 			} catch (IOException e1) {
 				logger.error("", e1);
@@ -157,30 +157,32 @@ public class RemoteUserServiceImpl implements UserService {
 	@Override
 	public TbUser getUser(HttpServletRequest request) {
 		Cookie[] cookies = request.getCookies();
-		String key = "";
+		String key = null;
 		for (Cookie cookie : cookies) {
 			String name = cookie.getName();
 			if (UserService.COOKIE_KEY.equals(name)) {
 				key = cookie.getValue();
+				break;
 			}
 		}
+		if (null == key)
+			return null;// 登录token都没有，不用找了
 		TbUser user = null;
 		// 先从本系统缓存里取
 		if (null != redisClient) {
 			try {
 				user = redisClient.hgetAsBean(REDIS_PREFIX, key, TbUser.class);
-			} catch (JedisException e) {
+			} catch (RedisException e) {
 				// 重试
 				try {
 					user = redisClient.hgetAsBean(REDIS_PREFIX, key, TbUser.class);
-				} catch (JedisException e1) {
+				} catch (RedisException e1) {
 					logger.info("重试仍失败", e1);
 				}
 			}
 			if (null != user)
 				return user;// 找到了
 		}
-
 		// 本地缓存没有，到远程sso系统里找吧
 		try {
 			return getUserByToken(key);
@@ -192,29 +194,32 @@ public class RemoteUserServiceImpl implements UserService {
 
 	@Override
 	public TbUser getUserById(int id) {
-		String url = genUrl("user");
-		url += "/" + id;
+		String url = genUrl("getuserbyid");
 		Map<String, String> params = new HashMap<String, String>();
-		remoteHeader(params);
+		params.put("id", id + "");
+		Map<String, String> header = remoteHeader();
 		ResponseResult res = null;
 		String result = "";
 		try {
-			result = HttpClientUtil.doGet(url, params);
+			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
 			// 重试
 			try {
-				result = HttpClientUtil.doGet(url, params);
+				result = HttpClientUtil.doGet(url, params, header);
 				res = getResponse(result);
 			} catch (IOException e1) {
-				logger.error("注册失败" + e1);
+				logger.error("" + e1);
 			}
 		}
 		try {
 			assertResponse(res);
 		} catch (UserException e) {
 		}
-		TbUser user = (TbUser) res.getData();
+		if (null == res) {
+			return null;
+		}
+		TbUser user = JsonUtils.toBean((JSONObject) res.getData(), TbUser.class);
 		return user;
 	}
 
@@ -223,26 +228,26 @@ public class RemoteUserServiceImpl implements UserService {
 		String url = genUrl("getuserbyname");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("name", name);
-		remoteHeader(params);
+		Map<String, String> header = remoteHeader();
 		ResponseResult res = null;
 		String result = "";
 		try {
-			result = HttpClientUtil.doGet(url, params);
+			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
 			// 重试
 			try {
-				result = HttpClientUtil.doGet(url, params);
+				result = HttpClientUtil.doGet(url, params, header);
 				res = getResponse(result);
 			} catch (IOException e1) {
-				logger.error("注册失败" + e1);
+				logger.error("无法获取用户" + e1);
 			}
 		}
 		try {
 			assertResponse(res);
 		} catch (UserException e) {
 		}
-		return (TbUser) res.getData();
+		return JsonUtils.toBean((JSONObject) res.getData(), TbUser.class);
 	}
 
 	@Override
@@ -250,26 +255,27 @@ public class RemoteUserServiceImpl implements UserService {
 		String url = genUrl("getuserbyname");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("email", email);
-		remoteHeader(params);
+		Map<String, String> header = remoteHeader();
 		ResponseResult res = null;
 		String result = "";
 		try {
-			result = HttpClientUtil.doGet(url, params);
+			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
 			// 重试
 			try {
-				result = HttpClientUtil.doGet(url, params);
+				result = HttpClientUtil.doGet(url, params, header);
 				res = getResponse(result);
 			} catch (IOException e1) {
-				logger.error("注册失败" + e1);
+				logger.error("无法获取用户" + e1);
 			}
 		}
 		try {
 			assertResponse(res);
 		} catch (UserException e) {
 		}
-		return (TbUser) res.getData();
+		return JsonUtils.toBean((JSONObject) res.getData(), TbUser.class);
+
 	}
 
 	@Override
@@ -277,26 +283,26 @@ public class RemoteUserServiceImpl implements UserService {
 		String url = genUrl("getuserbyname");
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("phone", phone);
-		remoteHeader(params);
+		Map<String, String> header = remoteHeader();
 		ResponseResult res = null;
 		String result = "";
 		try {
-			result = HttpClientUtil.doGet(url, params);
+			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
 			// 重试
 			try {
-				result = HttpClientUtil.doGet(url, params);
+				result = HttpClientUtil.doGet(url, params, header);
 				res = getResponse(result);
 			} catch (IOException e1) {
-				logger.error("注册失败" + e1);
+				logger.error("无法获取用户" + e1);
 			}
 		}
 		try {
 			assertResponse(res);
 		} catch (UserException e) {
 		}
-		return (TbUser) res.getData();
+		return JsonUtils.toBean((JSONObject) res.getData(), TbUser.class);
 
 	}
 
@@ -338,7 +344,7 @@ public class RemoteUserServiceImpl implements UserService {
 		boolean b = false;
 		try {
 			redisClient.hset(REDIS_PREFIX, key, user);
-		} catch (JedisException e) {
+		} catch (RedisException e) {
 			logger.info("token置入redis失败" + key);
 		}
 		b = true;
@@ -372,11 +378,13 @@ public class RemoteUserServiceImpl implements UserService {
 	}
 
 	/**
-	 * 远程请求识别参数，用于控制器识别返回不同类型的结果
+	 * 远程请求识别参数，用于控制器识别是其他的系统间调用还是前端调用
 	 * 
 	 * @param params
 	 */
-	private void remoteHeader(Map<String, String> params) {
-		params.put("reqType", "remote");
+	private Map<String, String> remoteHeader() {
+		Map<String, String> map = new HashMap<String, String>(1);
+		map.put(REMOTE_SERVER_INVOKE_KEY, REMOTE_SERVER_INVOKE_TOKEN);
+		return map;
 	}
 }

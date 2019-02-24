@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 import com.ajie.chilli.cache.redis.RedisClient;
 import com.ajie.chilli.cache.redis.RedisException;
 import com.ajie.chilli.common.enums.SexEnum;
+import com.ajie.chilli.support.TimingTask;
+import com.ajie.chilli.support.Worker;
+import com.ajie.chilli.utils.TimeUtil;
 import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.XmlHelper;
 import com.ajie.chilli.utils.common.JsonUtils;
@@ -29,6 +32,7 @@ import com.ajie.dao.pojo.TbUserExample;
 import com.ajie.dao.pojo.TbUserExample.Criteria;
 import com.ajie.sso.role.Role;
 import com.ajie.sso.role.RoleUtils;
+import com.ajie.sso.user.RedisWatch;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
 import com.ajie.web.utils.CookieUtils;
@@ -40,7 +44,7 @@ import com.ajie.web.utils.CookieUtils;
  *
  */
 @Service(value = "userService")
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, Worker {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
 	/**
@@ -63,6 +67,15 @@ public class UserServiceImpl implements UserService {
 	/** 用户默认头像路径 */
 	@Resource
 	private String user_defalut_header;
+	/** 定时删除 redis登录信息 */
+	private RedisWatch watch;
+
+	public UserServiceImpl() {
+		String ymd = TimeUtil.formatYMD(new Date());
+		// 每小时清除一次
+		TimingTask.createTimingTask("timing-del-login-info", this, TimeUtil.parse(ymd + " 00:00"),
+				3 * 60 * 1000);
+	}
 
 	@Override
 	public TbUser register(String name, String passwd, HttpServletRequest request,
@@ -164,15 +177,26 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public TbUser getUser(HttpServletRequest request) {
 		Cookie[] cookies = request.getCookies();
-		String key = "";
+		String key = null;
+		Cookie ck = null;
 		for (Cookie cookie : cookies) {
 			String name = cookie.getName();
 			if (UserService.COOKIE_KEY.equals(name)) {
 				key = cookie.getValue();
+				ck = cookie;
+				break;
 			}
+		}
+		if (null == key) {
+			return null;
 		}
 		try {
 			TbUser user = getUserFromRedis(key);
+			if (null == user) {
+				// key不为空，但是信息为空，删除request的缓存信息吧
+				ck.setMaxAge(0);
+			}
+			getWatch().update(key);// 因过滤器每次都会调用这个方法，所以在这个方法里更新
 			return user;
 		} catch (RedisException e) {
 			return null;
@@ -236,6 +260,7 @@ public class UserServiceImpl implements UserService {
 	private boolean putintoRedis(String key, TbUser user) throws RedisException {
 		boolean b = false;
 		redisClient.hset(REDIS_PREFIX, key, user);
+		getWatch().register(key);
 		b = true;
 		return b;
 	}
@@ -292,5 +317,17 @@ public class UserServiceImpl implements UserService {
 
 	public void setUserDefaultHeader(String header) {
 		this.user_defalut_header = header;
+	}
+
+	private RedisWatch getWatch() {
+		if (null == watch) {
+			watch = new RedisWatch(redisClient, REDIS_EXPIRE);
+		}
+		return watch;
+	}
+
+	@Override
+	public void work() {
+		getWatch().work();
 	}
 }

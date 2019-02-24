@@ -1,6 +1,6 @@
 (function(){
 	var userinfo = $("#iUserInfo");
-	getuser(13,function(data){
+	getuser(id,function(data){
 		userinfo.find(".userName").html(data.nickname || data.name);
 		userinfo.find(".userHeader").attr("src",data.header);
 		jsonpLoadBlogs();

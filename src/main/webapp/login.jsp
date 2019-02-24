@@ -14,11 +14,11 @@
 	body{padding: 20px;}
 	 input,textarea,select,a:focus {outline: none;}
 	 .mobile-login-dv{overflow: hidden}
-	.key-dv,.passwd-dv{padding: 0 10px; margin:10px 0; height: 45px;line-height: 45px;border: 1px solid #eee;border-radius: 3px;}
+	.key-dv,.passwd-dv{padding: 0 10px; margin:20px 0; height: 45px;line-height: 45px;border: 1px solid #eee;border-radius: 3px;}
 	.key-dv>input,.passwd-dv>input{border: none}
-	.login-btn{padding: 10px 5px;background: #337ab7;border-radius: 5px;text-align: center;font-size: 18px; color: #fff;margin-top:15px;cursor: pointer;}
+	.login-btn{padding: 10px 5px;background: #337ab7;border-radius: 5px;text-align: center;font-size: 18px; color: #fff;margin-top:25px;cursor: pointer;}
 	.form-group{display: flex;width: 200%;transition:all .3s ease}
-	.form-group input{width:100%;height: 95%;}
+	.form-group input{width:98%;height: 80%;}
 	.form-group>div{width: 100%;}
 	.navBar{width:100%;display: flex;}
 	.navBar>div{width: 50%;padding: 10px 30px;font-size: 16px;text-align:center;cursor: pointer;}
@@ -64,7 +64,7 @@
 		<!-- PC端 -->
 		<div class="pc-login-dv">
 			<div class="right-picture">
-				<img alt="图片加载失败" src="/images/logo.jpg">
+				<img alt="图片加载失败" src="${ pageContext.request.contextPath }/images/logo.jpg">
 			</div>
 			<div class="login-form  pc-form-group">
 			
@@ -94,7 +94,7 @@
 	</body>
 	
 	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
-	<script src="js/login.js"></script>
+	<script src="${ pageContext.request.contextPath }/js/login.js"></script>
 	<script type="text/javascript">
 		var ref = $("#iRef").val();
 	</script>

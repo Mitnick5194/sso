@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,8 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ajie.chilli.cache.redis.RedisClient;
-import com.ajie.chilli.cache.redis.RedisException;
 import com.ajie.chilli.common.ResponseResult;
 import com.ajie.chilli.common.enums.SexEnum;
 import com.ajie.chilli.utils.HttpClientUtil;
@@ -43,8 +40,8 @@ public class RemoteUserServiceImpl implements UserService {
 	/**
 	 * 本系统redis客户端服务
 	 */
-	@Resource
-	protected RedisClient redisClient;
+	/*	@Resource
+		protected RedisClient redisClient;*/
 
 	public RemoteUserServiceImpl(String ssohost) {
 		this.ssohost = ssohost;
@@ -136,6 +133,7 @@ public class RemoteUserServiceImpl implements UserService {
 		ResponseResult res = null;
 		String result = "";
 		try {
+			logger.info("请求连接" + url);
 			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
@@ -149,7 +147,7 @@ public class RemoteUserServiceImpl implements UserService {
 		}
 		assertResponse(res);
 		TbUser user = JsonUtils.toBean((JSONObject) res.getData(), TbUser.class);
-		putintoRedis(token, user);
+		// putintoRedis(token, user);
 		return user;
 
 	}
@@ -157,35 +155,50 @@ public class RemoteUserServiceImpl implements UserService {
 	@Override
 	public TbUser getUser(HttpServletRequest request) {
 		Cookie[] cookies = request.getCookies();
+		if (null == cookies)
+			return null;
 		String key = null;
+		Cookie ck = null;
 		for (Cookie cookie : cookies) {
 			String name = cookie.getName();
 			if (UserService.COOKIE_KEY.equals(name)) {
 				key = cookie.getValue();
+				ck = cookie;
 				break;
 			}
 		}
 		if (null == key)
 			return null;// 登录token都没有，不用找了
-		TbUser user = null;
-		// 先从本系统缓存里取
+		// 注释理由，不存在本地，存在本地不好全局控制（如修改密码和缓存过期）
+		/*TbUser user = null;
+		// 先从本系统缓存里取  
 		if (null != redisClient) {
 			try {
 				user = redisClient.hgetAsBean(REDIS_PREFIX, key, TbUser.class);
+				redisClient.expire(key, REDIS_EXPIRE);
 			} catch (RedisException e) {
 				// 重试
 				try {
 					user = redisClient.hgetAsBean(REDIS_PREFIX, key, TbUser.class);
+					redisClient.expire(key, REDIS_EXPIRE);
 				} catch (RedisException e1) {
 					logger.info("重试仍失败", e1);
 				}
 			}
 			if (null != user)
 				return user;// 找到了
-		}
+		}*/
 		// 本地缓存没有，到远程sso系统里找吧
 		try {
-			return getUserByToken(key);
+			TbUser user = getUserByToken(key);
+			if (null == user) {
+				// 有key但是没有值，可能缓存到期了，被清除了，将request的缓存也过期吧
+				if (null == user) {
+					// key不为空，但是信息为空，删除request的缓存信息吧
+					ck.setMaxAge(0);
+				}
+			}
+			return user;
 		} catch (UserException e) {
 			logger.error("", e);
 		}
@@ -340,7 +353,14 @@ public class RemoteUserServiceImpl implements UserService {
 			throw new UserException(response.getMsg());
 	}
 
-	private boolean putintoRedis(String key, TbUser user) {
+	/**
+	 * 暂时不存在本地，存在本地不好全局控制（如修改密码和缓存过期）
+	 * 
+	 * @param key
+	 * @param user
+	 * @return
+	 */
+	/*private boolean putintoRedis(String key, TbUser user) {
 		boolean b = false;
 		try {
 			redisClient.hset(REDIS_PREFIX, key, user);
@@ -349,7 +369,7 @@ public class RemoteUserServiceImpl implements UserService {
 		}
 		b = true;
 		return b;
-	}
+	}*/
 
 	@Override
 	public List<Role> getRoles() {

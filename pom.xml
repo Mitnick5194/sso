@@ -144,7 +144,7 @@
 						<phase>install</phase>
 						<configuration>
 							<outputDirectory>target/user</outputDirectory>
-							<classifier>user</classifier>
+							<classifier>user-1.0.10</classifier>
 							<includes>
 								<include>**/role/**</include>
 								<include>**/user/**</include>
@@ -168,7 +168,7 @@
 						</goals>
 						<configuration>
 							<outputDirectory>target/user</outputDirectory>
-							<classifier>user-resource</classifier>
+							<classifier>user-resource-1.0.10</classifier>
 							<includes>
 								<include>**/role/**</include>
 								<include>**/user/**</include>

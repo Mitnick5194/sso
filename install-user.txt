@@ -1,1 +1,3 @@
 mvn install:install-file -Dfile=D:\myworkspace\sso\target\user\sso-user.jar -DgroupId=com.ajie -DartifactId=sso-user -Dversion=1.0.10 -Dpackaging=jar
+ 
+copy /Y D:\myworkspace\sso\target\user\sso-user.jar D:\maven\repository\com\ajie\sso-user\1.0.10\sso-user-1.0.10.jar

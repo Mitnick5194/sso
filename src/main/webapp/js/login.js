@@ -46,7 +46,12 @@
 				if(ref){
 					location.href = ref;
 				}else{
-					location.href = "http://localhost:8081/index.do";
+					var host = location.host;
+					if(host.indexOf("ajie18")>-1){
+						location.href = "http://www.ajie18.top/blog/index.do";
+					}else{
+						location.href = "http://localhost:8080/blog/index.do";
+					}
 				}
 				
 			},

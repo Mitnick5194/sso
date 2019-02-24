@@ -29,7 +29,7 @@ public class UserVo {
 	private Date createtime;
 
 	private String header;
-
+	
 	public UserVo(TbUser user) {
 		this.id = user.getId();
 		this.name = user.getName();

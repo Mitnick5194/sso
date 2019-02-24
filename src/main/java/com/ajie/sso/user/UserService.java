@@ -29,9 +29,12 @@ public interface UserService {
 	/** 请求中token参数的key */
 	public final static String REQUEST_TOKEN_KEY = "onnssskey";
 
-	/** 远程系统间的调用，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
+	/** redis登录信息的过期值,单位秒 */
+	public final static int REDIS_EXPIRE = 60;
+
+	/** 远程系统间调用识别的键，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
 	public final static String REMOTE_SERVER_INVOKE_KEY = "RSIK";
-	/** 远程系统间的调用，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
+	/** 远程系统间调用的识别值，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
 	public final static String REMOTE_SERVER_INVOKE_TOKEN = "RSIT";
 
 	/** 登陆类型 -- 用户名登录 */

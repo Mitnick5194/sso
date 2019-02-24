@@ -11,11 +11,11 @@
 <style type="text/css">
 html{font-size:14px;}
 body{margin:0;padding:0}
-.header{background: url('/images/background.jpg') no-repeat;background-size: 100%; width: 100%;height: 180px;}
+.header{background: url('./images/background.jpg') no-repeat;background-size: 100%; width: 100%;height: 180px;}
 .header-info{position: absolute;top: 20px;width: 100%;height: 300px;}
 .header-img{width: 100%;text-align: center;}
 .header-info>.user-name{font-size: 16px;margin-top: 5px;}
-.header-img>img{display: inline-block; width: 80px;height: 80px;border-radius: 50%;border: 1px solid #888}
+.header-img>img{display: inline-block; width: 80px;height: 80px;border-radius: 50%}
 .header-info{width: 100%; text-align: center;color:#fff;}
 .blog-info{padding: 5px 0;}
 .main{margin-top: 20px;}
@@ -25,6 +25,7 @@ body{margin:0;padding:0}
 .nav div+div{border-left: 1px solid #bbb;}
 .article{display: flex;width: 300%;padding: 10px;white-space: nowrap;transition: all .15s ease}
 .article>div{width: 100%;padding: 10px;}
+.blog{width: 100%; height: 300px;display: flex;align-items:center; justify-content: center;font-size: 18px;}
 .align-c{text-align: center;}
 .no-data{font-size: 16px; color: #888;}
 </style>
@@ -37,7 +38,7 @@ body{margin:0;padding:0}
 				<div class="header-img">
 					<img alt="" src="" class="userHeader">
 				</div>
-				<div class="user-name userName">心有林夕</div>
+				<div class="user-name userName"></div>
 				<div class="blog-info">
 					<span class="blogNum">原创 0 |</span>
 					<span> 转载  0 |</span>
@@ -53,7 +54,8 @@ body{margin:0;padding:0}
 				</div>
 				<div id="iArticle" class="article">
 					<div class="blog">
-					<script type="text/temp" id="iBlogTemp">
+						站点尚未开通，敬请期待...
+				<!-- <script type="text/temp" id="iBlogTemp">
 						<section data-id="[id]" class="content-dv item">
 	           				<h2 class="content-dv-title" title="">
 	            				<span>[title]</span>
@@ -74,7 +76,7 @@ body{margin:0;padding:0}
 		  			</section>
 		 		 </div>
 			</section>
-	</script>
+	</script> -->	
 					</div>
 					<div class="sort">
 						<div class="align-c no-data">没有任何分类</div>
@@ -84,8 +86,9 @@ body{margin:0;padding:0}
 			</div>
 		</div>
 	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
-	<script src="js/userinfo.js"></script>
+	
 	<script>
+	var id = "${id}";
 		(function(){
 			$("#iNav").on("click","div" , function(){
 				var _this = $(this);
@@ -111,4 +114,5 @@ body{margin:0;padding:0}
 			
 		})()
 	</script>
+	<script src="js/userinfo.js"></script>
 </html>

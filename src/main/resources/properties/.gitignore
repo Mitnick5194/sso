@@ -1,2 +1,4 @@
 /db.properties
 /redis-conf.properties
+/filePath.properties
+/sso.properties

@@ -12,25 +12,25 @@
 			confirmPassword = $.trim(parent.find("input[name=confirmPasswd]").val());
 		}
 		if(!name){
-			alert("用户名不能为空")
+			$.showToast("用户名不能为空")
 			return;
 		}
 		if(!password){
-			alert("密码不能为空");
+			$.showToast("密码不能为空");
 			return;
 		}
 		if(type == "register"){
 			if( !confirmPassword){
-				alert("请输入确认密码");
+				$.showToast("请输入确认密码");
 				return;
 			}
 			if(confirmPassword != password){
-				alert("两次密码不一致");
+				$.showToast("两次密码不一致");
 				return;
 			}
 			
 		}
-		
+		var loading = $.showloading("正在登录");
 		$.ajax({
 			type: "post",
 			url: url,
@@ -40,9 +40,10 @@
 			},
 			success: function(data){
 				if(data.code != 200){
-					alert(data.msg)
+					$.showToast(data.msg,2000)
 					return;
 				}
+				loading.hide();
 				if(ref){
 					location.href = ref;
 				}else{
@@ -56,7 +57,7 @@
 				
 			},
 			fail: function(e){
-				console.log(e);
+				$.showToast(e);
 			},
 			complete: function(){
 				

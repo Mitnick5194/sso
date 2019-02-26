@@ -36,6 +36,7 @@
 	@media screen and (min-width: 768px) {.pc-login-dv{display: none} .mobile-login-dv{display:block}}
 	@media screen and (min-width: 768px) {.pc-login-dv{display: flex} .mobile-login-dv{display:none} }
 </style>
+ <link href="${pageContext.request.contextPath }/${serviceId }/common/common.css" rel="stylesheet" type="text/css">
 </head>
 	<body>
 		<input id="iRef" type="hidden" value="${ref }" />
@@ -94,7 +95,8 @@
 	</body>
 	
 	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
-	<script src="${ pageContext.request.contextPath }/js/login.js"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serviceId }/common/common.js"></script>
+	<script src="${ pageContext.request.contextPath }/${serviceId }/js/login.js"></script>
 	<script type="text/javascript">
 		var ref = $("#iRef").val();
 	</script>

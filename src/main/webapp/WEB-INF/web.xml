@@ -67,7 +67,7 @@
 	</filter>
 	<filter-mapping>
 		<filter-name>requestFilter</filter-name>
-		<url-pattern>/</url-pattern>
+		<url-pattern>*.do</url-pattern>
 	</filter-mapping>
 	
 		<error-page>

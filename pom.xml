@@ -141,7 +141,7 @@
 						<goals>
 							<goal>jar</goal>
 						</goals>
-						<phase>install</phase>
+						<phase>package</phase>
 						<configuration>
 							<outputDirectory>target/user</outputDirectory>
 							<classifier>user-1.0.10</classifier>
@@ -162,7 +162,7 @@
 				</configuration>
 				<executions>
 					<execution>
-						<phase>install</phase>
+						<phase>package</phase>
 						<goals>
 							<goal>jar-no-fork</goal>
 						</goals>

@@ -1,9 +1,17 @@
 package com.ajie.sso.controller;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.imaging.ImageFormats;
+import org.apache.commons.imaging.ImageWriteException;
+import org.apache.commons.imaging.Imaging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.converter.json.MappingJacksonValue;
@@ -11,7 +19,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.ajie.chilli.cache.redis.RedisClient;
+import com.ajie.chilli.cache.redis.RedisException;
 import com.ajie.chilli.common.ResponseResult;
+import com.ajie.chilli.common.VerifyImage;
 import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.common.StringUtils;
 import com.ajie.dao.pojo.TbUser;
@@ -32,6 +43,9 @@ public class UserController {
 
 	@Resource
 	private UserService remoteUserService;
+
+	@Resource
+	private RedisClient redisClient;
 
 	/**
 	 * 登录页
@@ -85,8 +99,15 @@ public class UserController {
 	public Object register(HttpServletRequest request, HttpServletResponse response) {
 		String name = request.getParameter("key");
 		String password = request.getParameter("password");
+		String vertify = request.getParameter("verifycode"); // 验证码
+		String vertifyKey = request.getParameter("verifyKey"); // 验证码key
 		String callback = request.getParameter("callback");
 		ResponseResult result = null;
+		if (null == vertify)
+			return ResponseResult.newResult(ResponseResult.CODE_ERR, "验证码为空");
+		String cacheVertify = redisClient.get(VerifyImage.CACHE_PREFIX + vertifyKey);
+		if (!StringUtils.eq(vertify, cacheVertify))
+			return ResponseResult.newResult(ResponseResult.CODE_ERR, "验证码错误");
 		try {
 			TbUser user = userService.register(name, password, request, response);
 			if (isRemote(request)) {
@@ -138,7 +159,8 @@ public class UserController {
 
 	@ResponseBody
 	@RequestMapping("/dologin")
-	public ResponseResult dologin(HttpServletRequest request, HttpServletResponse response) {
+	public Object dologin(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
 		String key = request.getParameter("key");
 		String password = request.getParameter("password");
 		String callback = request.getParameter("callback");
@@ -156,9 +178,16 @@ public class UserController {
 		if (null == callback) {
 			return result;
 		}
-		MappingJacksonValue jsonp = new MappingJacksonValue(result);
-		jsonp.setJsonpFunction(callback);
-		return result;
+		// 不知原因，使用MappingJacksonValue转换的结果不是jsonp格式，可能是fastjson的问题，以后再深究
+		/*MappingJacksonValue jsonp = new MappingJacksonValue(obj);
+		jsonp.setJsonpFunction("callback");
+		String fun = jsonp.getJsonpFunction();
+		System.out.println(fun);*/
+		String jsonp = ResponseResult.toJsonp(result, "callback");
+		PrintWriter out = response.getWriter();
+		out.write(jsonp);
+		return null;
+		// return result;
 	}
 
 	/**
@@ -225,6 +254,67 @@ public class UserController {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
 		}
 		return result;
+	}
+
+	/**
+	 * 获取或更新验证码的key
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("/getverifykey.do")
+	void getverifykey(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		setAjaxContentType(response);
+		PrintWriter writer = response.getWriter();
+		String key = request.getParameter("key");
+		if (null != key) {
+			// 删除就的key
+			try {
+				redisClient.del(VerifyImage.CACHE_PREFIX + key);
+			} catch (RedisException e) {
+				logger.warn("无法删除验证码缓存", e);
+			}
+		}
+		key = Toolkits.uniqueKeyLowerCase(16);
+		String value = Toolkits.randomNum(4);
+		try {
+			redisClient.set(VerifyImage.CACHE_PREFIX + key, value);
+			redisClient.expire(VerifyImage.CACHE_PREFIX + key, 180);// 三分钟
+		} catch (RedisException e) {
+			logger.error("无法缓存验证码", e);
+			return;
+		}
+		writer.print("{\"key\":\"" + key + "\"}");
+	}
+
+	/**
+	 * 验证码写到页面
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("/getvertifycode.do")
+	void getvertifycode(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		OutputStream out = response.getOutputStream();
+		String key = request.getParameter("key");
+		String val = redisClient.get(VerifyImage.CACHE_PREFIX + key);
+		if (null == val) {
+			return;
+		}
+		BufferedImage buffer = VerifyImage.getImage(val, 80, 45);
+		try {
+			Imaging.writeImage(buffer, out, ImageFormats.PNG, null);
+		} catch (ImageWriteException e) {
+			logger.error("生成无法写出页面", e);
+		}
+	}
+
+	private void setAjaxContentType(HttpServletResponse response) {
+		response.setContentType("application/json;charset=UTF-8");
+		response.setCharacterEncoding("utf-8");
 	}
 
 	/*********** 以下为测试远程 ***************/

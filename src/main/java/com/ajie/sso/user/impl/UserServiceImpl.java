@@ -74,7 +74,7 @@ public class UserServiceImpl implements UserService, Worker {
 		String ymd = TimeUtil.formatYMD(new Date());
 		// 每小时清除一次
 		TimingTask.createTimingTask("timing-del-login-info", this, TimeUtil.parse(ymd + " 00:00"),
-				3 * 60 * 1000);
+				60 * 60 * 1000);
 	}
 
 	@Override
@@ -271,7 +271,7 @@ public class UserServiceImpl implements UserService, Worker {
 	}
 
 	private void setCookie(HttpServletRequest request, HttpServletResponse response, String value) {
-		CookieUtils.setCookie(request, response, COOKIE_KEY, value);
+		CookieUtils.setCookie(request, response, COOKIE_KEY, value,30*60);
 	}
 
 	public void loadRoles() {

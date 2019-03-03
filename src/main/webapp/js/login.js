@@ -1,4 +1,9 @@
 (function(){
+	var verifyKey;
+	$(document).ready(function(){
+		getVerifykey();
+	})
+	
 	$(".submitBtn").on("click" , function(){
 		var url = "dologin.do";
 		var _this  = $(this);
@@ -7,9 +12,11 @@
 		var password = $.trim(parent.find("input[name=password]").val());
 		var type = _this.attr("data-type");
 		var confirmPassword ;
+		var verifycode;
 		if(type == "register"){
 			url = "register.do";
 			confirmPassword = $.trim(parent.find("input[name=confirmPasswd]").val());
+			verifycode = $.trim(parent.find("input[name=vertifyCode]").val());
 		}
 		if(!name){
 			$.showToast("用户名不能为空")
@@ -28,19 +35,26 @@
 				$.showToast("两次密码不一致");
 				return;
 			}
+			if(!verifycode){
+				$.showToast("验证码为空");
+				return;
+			}
 			
 		}
-		var loading = $.showloading("正在登录");
+		var loading = $.showloading(type == "register" ? "注册中":"正在登录");
 		$.ajax({
 			type: "post",
 			url: url,
 			data:{
 				key:name,
-				password: password
+				password: password,
+				verifycode: verifycode,
+				verifyKey:verifyKey
 			},
 			success: function(data){
 				if(data.code != 200){
 					$.showToast(data.msg,2000)
+					getVerifykey();//更新验证码
 					return;
 				}
 				loading.hide();
@@ -79,7 +93,25 @@
 		}else{
 			$(".form-group").css("transform","translateX(-50%)")
 		}
+	});
+	
+	$(".verifyImg").on("click",function(){
+		getVerifykey();
 	})
+	
+	function getVerifykey(callback){
+		$.ajax({
+			type: 'get',
+			url: 'getverifykey.do',
+			data: {
+				key:verifyKey
+			},
+			success: function(data){
+				verifyKey = data.key;
+				$(".verifyImg").attr("src","getvertifycode.do?key="+data.key);
+			}
+		})
+	}
 	
 })()
 

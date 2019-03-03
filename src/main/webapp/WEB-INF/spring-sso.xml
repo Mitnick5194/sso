@@ -16,7 +16,7 @@
 
 	<!-- 这个过滤器一定不能配在spring-mvc的spring文件中 -->
 	<bean id="requestFilter " class="com.ajie.web.RequestFilter">
-		<property name="serviceId" value="${serviceId}" />
+		<property name="serviceId" value="${serverId}" />
 		<property name="userService" ref="remoteUserService" />
 		<property name="encoding" value="utf-8" />
 		<property name="mode" value="intercept" />

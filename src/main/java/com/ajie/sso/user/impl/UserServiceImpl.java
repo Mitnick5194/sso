@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService, Worker {
 
 	/** 用户默认头像路径 */
 	@Resource
-	private String user_defalut_header;
+	private String userDefalutHeader;
 	/** 定时删除 redis登录信息 */
 	private RedisWatch watch;
 
@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService, Worker {
 		// 密码加密
 		String enc = Toolkits.md5Password(passwd);
 		TbUser user = new TbUser(name, enc);
-		user.setHeader(user_defalut_header);
+		user.setHeader(userDefalutHeader);
 		List<Role> roles = Collections.singletonList(Role._Nil);// TODO
 		user.setRoleids(JsonUtils.toJSONString(roles));
 		userMapper.insert(user);
@@ -271,7 +271,7 @@ public class UserServiceImpl implements UserService, Worker {
 	}
 
 	private void setCookie(HttpServletRequest request, HttpServletResponse response, String value) {
-		CookieUtils.setCookie(request, response, COOKIE_KEY, value,30*60);
+		CookieUtils.setCookie(request, response, COOKIE_KEY, value,REDIS_EXPIRE);
 	}
 
 	public void loadRoles() {
@@ -316,7 +316,7 @@ public class UserServiceImpl implements UserService, Worker {
 	}
 
 	public void setUserDefaultHeader(String header) {
-		this.user_defalut_header = header;
+		this.userDefalutHeader = header;
 	}
 
 	private RedisWatch getWatch() {

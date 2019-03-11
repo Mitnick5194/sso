@@ -47,6 +47,34 @@ public class UserController {
 	@Resource
 	private RedisClient redisClient;
 
+	@Resource
+	private String stopCommand;
+	@Resource
+	private String admin;
+
+	/**
+	 * 关闭服务器
+	 * 
+	 * @param request
+	 */
+	@RequestMapping("stop")
+	public void stop(HttpServletRequest request, HttpServletResponse response) {
+		String passwd = request.getParameter("passwd");
+		if (null != passwd && stopCommand.equals(passwd)) {
+			logger.info("无用户模式下操作关闭服务器");
+			System.exit(0);// 在sso系统没有启动的情况下关闭
+		}
+		TbUser user = userService.getUser(request);
+		if (null == user) {
+			return;
+		}
+		if (!admin.equals(user.getName())) {
+			return;
+		}
+		logger.info(user.getName() + "正在操作关闭服务器");
+		System.exit(0);
+	}
+
 	/**
 	 * 登录页
 	 * 
@@ -98,10 +126,15 @@ public class UserController {
 	@RequestMapping("/register")
 	public Object register(HttpServletRequest request, HttpServletResponse response) {
 		String name = request.getParameter("key");
+		if (StringUtils.isSpecialChar(name)) {
+			// 用户名包含特殊字符，不允许
+			return ResponseResult.newResult(ResponseResult.CODE_ERR, "用户名不能包含特殊字符:" + name);
+		}
 		String password = request.getParameter("password");
 		String vertify = request.getParameter("verifycode"); // 验证码
 		String vertifyKey = request.getParameter("verifyKey"); // 验证码key
 		String callback = request.getParameter("callback");
+
 		ResponseResult result = null;
 		if (null == vertify)
 			return ResponseResult.newResult(ResponseResult.CODE_ERR, "验证码为空");

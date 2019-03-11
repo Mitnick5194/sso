@@ -13,12 +13,12 @@ import com.ajie.chilli.cache.redis.RedisClient;
 import com.ajie.chilli.cache.redis.RedisException;
 
 /**
- * 登录信息过期
+ * 登录信息过期，当服务器关闭时，删除所有的登录信息，但是需要规范关闭服务器才回执行关闭hook
  *
  * @author niezhenjie
  *
  */
-public class RedisWatch {
+public class RedisWatch extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(RedisWatch.class);
 	private RedisClient redisClient;
 	/** 键是key，值是创建时间 */
@@ -26,10 +26,14 @@ public class RedisWatch {
 	/** 过期时间，单位为秒 */
 	private long expire;
 
+	protected final String HOOK_THREAD_NAME = "redis-hook";
+
 	public RedisWatch(RedisClient redisClient, long expire) {
 		this.redisClient = redisClient;
 		map = new HashMap<String, Date>();
 		this.expire = expire;
+		super.setName(HOOK_THREAD_NAME);
+		Runtime.getRuntime().addShutdownHook(this);
 	}
 
 	public void register(String key) {
@@ -104,5 +108,23 @@ public class RedisWatch {
 			}
 		}
 
+	}
+
+	@Override
+	public void run() {
+		super.run();
+		shutdownHook();
+	}
+
+	/**
+	 * 关闭服务器同步删除相关redis
+	 */
+	protected void shutdownHook() {
+		try {
+			redisClient.hdel(UserService.REDIS_PREFIX);
+			logger.info("系统退出，登录信息已清除");
+		} catch (RedisException e) {
+			logger.error("服务器关闭hook线程删除redis用户登录信息失败", e);
+		}
 	}
 }

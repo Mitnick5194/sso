@@ -30,7 +30,7 @@ public interface UserService {
 	public final static String REQUEST_TOKEN_KEY = "onnssskey";
 
 	/** redis登录信息的过期值,单位秒 */
-	public final static int REDIS_EXPIRE = 60;
+	public final static int REDIS_EXPIRE = 30*60;
 
 	/** 远程系统间调用识别的键，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
 	public final static String REMOTE_SERVER_INVOKE_KEY = "RSIK";

@@ -13,29 +13,25 @@
 	var BODY = $(document.body);
 	var DOC = $(document);
 	var WIN = $(window);
-	$.extend($.fn , {
-		getWindow: function(){
-			return new WindowPlugin(this);
-		},
-
-
-	})
-
-	$.extend($,{
-		showToast: function(msg,delay,callback){
-			var arg = arguments[1];
-			//如果第二个参数是函数，则第二个参数就是回调，delay给一个默认值
-			 if(typeof arg === 'function'){
-			 	callback = arg;
-			 	delay = 1000;
-			 }
-			showmsg(msg,delay,callback);
-		},
-		showloading: function(msg,delay,callback){
-			return showloading(msg,delay,callback);
-		}
-	})
-
+	/**空对象*/
+	var EMPTY = {}; 
+	/**本地储存*/
+    var _storage = localStorage;
+     //代理字符串
+    var userAgent = navigator.userAgent.toLowerCase();
+      // 移动端常见的浏览器类型判断
+    var BROWSER = {
+        // ie10及以下版本的判断
+        ie: !!DOC.all,
+        android: userAgent.indexOf("android") > -1 || userAgent.indexOf("linux") > -1,
+        iphone: userAgent.indexOf("iphone") > -1,
+        mobile: userAgent.indexOf("mobile") > -1,
+        ipad: userAgent.indexOf("ipad") > -1,
+        //是否在微信浏览器环境中
+        weixin: userAgent.indexOf("micromessenger") > -1
+    };
+    var base64EncodeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    var base64DecodeChars = new Array(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1);
 	function showmsg(msg,delay,callback){
 		showmsgExt({
 			msg: msg,
@@ -213,13 +209,19 @@
  */
  function WindowPlugin(ele) {
  	var content = $(ele);
+ 	var contentWidth = content.width();
+ 	var contentHeight = content.height();
  	var win = $(window);
  	var plugin = this;
  	var mask = $("<div/>").addClass("window-plugin-background").appendTo(BODY);
  	var dialog = $("<div/>").addClass("window-plugin-dialog").appendTo(BODY);
  	var closer = $("<span/>").addClass("window-plugin-closer").appendTo(dialog).attr("title", "关闭");
- 	content.appendTo(dialog);
-	var clickbackhide = false; //点击背景关闭 默认不关闭
+ 	
+ 	content.appendTo(dialog).css({
+ 		width: contentWidth,
+ 		contentHeight:contentHeight
+ 	});
+	var clickbackhide = true; //点击背景关闭 默认不关闭
 	var callbackafterclose; //关闭后回调
 	this.setCallbackafterclose = function (callbackafterclose) {
 		this.callbackafterclose = callbackafterclose;
@@ -250,6 +252,10 @@
 		setTimeout(function() {
 			hideWindow(callback);
 		} , 500)
+	}
+	this.destory = function(){
+		dialog && dialog.remove();
+		mask && mask.remove();
 	}
 	this.setCloser = function(bool) { //显示||隐藏X关闭图标
 		var b = typeof bool ==='boolean' ? bool :  true;
@@ -318,4 +324,324 @@
 		}
 	});
 }
+ 
+ /**
+  * 侧边滑出全屏窗口
+  * @param options
+  */
+ function SlideWindow(options){
+ 	const timeout = 300;//过渡时间，要与css动画相同
+	var opts = $.extend({
+	 	 ele: null,//元素
+		 direction: "right", //方向，right从右边滑出，left从从边滑出,top从上面滑下，bottom从底部
+		 callback: null,//滑出后回调
+		 hidecallback: null,//收起后回调
+		 zIndex: 1500,
+		 title: "",//滑出后title显示内容
+	 },options)
+	 var mask = $("<div>").addClass("slide-win-mask").appendTo(BODY);
+	 var dialog = $("<div>").addClass("slide-win-dialog").appendTo(BODY).append(opts.ele).css({"z-index":opts.zIndex});
+	 var direction = opts.direction;
+	 (function(){
+		trans("hide");
+	 })()
+
+	 /**
+	  *
+	  * action show为打开，hide为收起
+	  *
+	  */
+	 function trans(action){
+	 	var direction = opts.direction;
+	 	if("right" === direction || "left" === direction){
+	 		var dir = "right" === direction ? 1 :-1;
+	 		var x = action === "show" ? 0 : 100 * dir;
+	 		dialog.css({
+	 			transform: "translateX("+x+"%)"
+	 		})
+	 	}else if("top" === direction || "bottom" === direction){
+	 		var dir = "bottom" === direction ? 1 : -1;
+	 		var y = action === "show" ? 0 : 100 * dir;
+	 		dialog.css({
+	 			transform: "translateY("+y+"%)"
+	 		})
+	 	}
+	 }
+
+	 function show(title , callback){
+	 	mask.removeClass("slide-win-mask-hide").addClass("slide-win-mask-show").show();
+	 	trans("show");
+	 	var oldTitle = DOC[0].title;
+	 	opts.oldTitle = oldTitle;
+	 	var tt = title || opts.title;
+	 	if(tt && tt.length){
+			DOC[0].title = tt;
+	 	}
+	 	var timing = setTimeout(function(){
+	 		typeof callback === "function" && callback() || typeof opts.callback === "function" && opts.callback();
+	 		mask.hide();
+	 		clearTimeout(timing);
+	 	},timeout);
+	 	
+	 }
+
+	 function hide(callback){
+	 	mask.removeClass("slide-win-mask-show").addClass("slide-win-mask-hide").show();
+	 	trans("hide");
+	 	DOC[0].title = opts.oldTitle;
+	 	var timing = setTimeout(function(){
+	 		mask.removeClass("slide-win-mask-show").addClass("slide-win-mask-hide").hide();
+	 		typeof callback === "function" && callback() ||typeof opts.hidecallback === "function" && opts.hidecallback();
+	 		clearTimeout(timing);
+	 	},timeout);
+	 }
+
+	 this.show = function(title,callback){
+	 	show(title,callback);
+	 };
+	 this.hide = function(callback){
+	 	hide(callback);
+	 }
+ }
+
+ /**
+  * base64编码
+  * @param {Object} str
+  */
+ function base64encode(str) {
+     var out, i, len;
+     var c1, c2, c3;
+     len = str.length;
+     i = 0;
+     out = EMPTY;
+     while (i < len) {
+         c1 = str.charCodeAt(i++) & 255;
+         if (i == len) {
+             out += base64EncodeChars.charAt(c1 >> 2);
+             out += base64EncodeChars.charAt((c1 & 3) << 4);
+             out += "==";
+             break;
+         }
+         c2 = str.charCodeAt(i++);
+         if (i == len) {
+             out += base64EncodeChars.charAt(c1 >> 2);
+             out += base64EncodeChars.charAt((c1 & 3) << 4 | (c2 & 240) >> 4);
+             out += base64EncodeChars.charAt((c2 & 15) << 2);
+             out += "=";
+             break;
+         }
+         c3 = str.charCodeAt(i++);
+         out += base64EncodeChars.charAt(c1 >> 2);
+         out += base64EncodeChars.charAt((c1 & 3) << 4 | (c2 & 240) >> 4);
+         out += base64EncodeChars.charAt((c2 & 15) << 2 | (c3 & 192) >> 6);
+         out += base64EncodeChars.charAt(c3 & 63);
+     }
+     return out;
+ }
+
+ /**
+  * base64解码
+  * @param {Object} str
+  */
+ function base64decode(str) {
+     var c1, c2, c3, c4;
+     var i, len, out;
+     len = str.length;
+     i = 0;
+     out = EMPTY;
+     while (i < len) {
+         /* c1 */
+         do {
+             c1 = base64DecodeChars[str.charCodeAt(i++) & 255];
+         } while (i < len && c1 == -1);
+         if (c1 == -1) break;
+         /* c2 */
+         do {
+             c2 = base64DecodeChars[str.charCodeAt(i++) & 255];
+         } while (i < len && c2 == -1);
+         if (c2 == -1) break;
+         out += String.fromCharCode(c1 << 2 | (c2 & 48) >> 4);
+         /* c3 */
+         do {
+             c3 = str.charCodeAt(i++) & 255;
+             if (c3 == 61) return out;
+             c3 = base64DecodeChars[c3];
+         } while (i < len && c3 == -1);
+         if (c3 == -1) break;
+         out += String.fromCharCode((c2 & 15) << 4 | (c3 & 60) >> 2);
+         /* c4 */
+         do {
+             c4 = str.charCodeAt(i++) & 255;
+             if (c4 == 61) return out;
+             c4 = base64DecodeChars[c4];
+         } while (i < len && c4 == -1);
+         if (c4 == -1) break;
+         out += String.fromCharCode((c3 & 3) << 6 | c4);
+     }
+     return out;
+ }
+	//扩展jquery
+	$.extend($,{
+		
+		/**
+		 * Base64工具
+		 */
+		
+		Base64: {
+			/**
+			 * 编码
+			 */
+			encode: function(str){
+				return base64encode(str);
+			},
+			
+			/**
+			 * 解码
+			 */
+			decode:function(str){
+				return base64decode(str);
+			}
+			
+		},
+		/**
+	     * Cookie操作
+	     */
+	    Cookie: {
+	        /**
+	         * 保存cookie
+	         * 例如：
+	         *        $.Cookie.set("key","value");//不指定过期时间
+	         *        $.Cookie.set("key","value",1000*60*60);//指定过期时间【毫秒】
+	         */
+	        set: function (key, value, expiresMillis, path) {
+	            var ck = key + "=" + escape(value);
+	            // 判断是否设置过期时间
+	            var date = new Date();
+	            if (expiresMillis) {
+	                date.setTime(date.getTime() + expiresMillis);
+	            } else {
+	                date.setFullYear(date.getFullYear() + 1);
+	            }
+	            ck = ck + ";expires=" + date.toGMTString() + ";path=" + (path || "");
+	            DOC[0].cookie = ck;
+	        },
+	        /**
+	         * 获取保存的cookie
+	         * 例如：$.Cookie.get("key");
+	         */
+	        get: function (key) {
+	            var array = DOC[0].cookie.split(";");
+	            for (var i = 0; i < array.length; i++) {
+	                var arr = array[i].split("=");
+	                if (arr[0].trim() == key) {
+	                    return unescape(arr[1]);
+	                }
+	            }
+	            return EMPTY;
+	        },
+	        /**
+	         * 移除cookie
+	         * 例如：$.Cookie.remove("key","path=/");
+	         * key:键
+	         * path:路径【可选】
+	         */
+	        remove: function (key, path) {
+	            var date = new Date();
+	            date.setDate(date.getDate() - 1);
+	            DOC[0].cookie = key + "=;expires=" + date.toGMTString() + ";path=" + (path || "");
+	        },
+	        /**
+	         * 删除所有的cookie
+	         * 例如Query.Cookie.clear();
+	         * path:路径【可选】
+	         */
+	        clear: function (path) {
+	            var date = new Date();
+	            date.setDate(date.getDate() - 1);
+	            var ex = date.toGMTString();
+	            var keys = DOC[0].cookie.match(/[^ =;]+(?=\=)/g);
+	            $.each(keys, function (key) {
+	                var ck = key + "=;expires=" + ex;
+	                if (path) {
+	                    ck += ";path=" + (path || "");
+	                }
+	                DOC[0].cookie = ck;
+	            });
+	        }
+	    },
+	    /**
+	     * HTML5本地储存，用法同Cookie操作
+	     * 区别：
+	     *    Cookie只能储存最多4k的内容，Storage：2M
+	     * Cookie可以在后台获取到，Storage不能 
+	     * FIXME 使用base64格式化后存储
+	     */
+	    Storage: {
+	        get: function (key) {
+	           /* var data = _storage.getItem($.Base64.encode(key));
+	            return data ? $.Base64.decode(data) : EMPTY;*/
+	        	 var data = _storage.getItem(key);
+		         return data ? data : EMPTY;
+	        },
+	        set: function (key, value) {
+	            _storage.setItem(key, value);
+	        },
+	        remove: function (key) {
+	            _storage.removeItem(key);
+	        },
+	        clear: function () {
+	            _storage.clear();
+	        }
+	    },
+	  //判断是否支持无前缀型css3
+		supportcss3:function(){
+			var bool = false;
+			if(null ===CSS3_SUPPORTED){
+				var support = $("<i/>");
+				bool = support[0].style.animation==="";
+				support.remove();
+			}
+			return bool;
+		},
+
+		//判断是否为指定浏览器
+		isBrowser:function(browser){
+			return !!BROWSER[browser]
+		},
+
+		/**转小写*/
+		lowerCase: function(src){
+			if(!src || !src.length){
+				return "";
+			}
+			return src.toLocaleLowerCase();
+		},
+		
+		showToast: function(msg,delay,callback){
+			var arg = arguments[1];
+			//如果第二个参数是函数，则第二个参数就是回调，delay给一个默认值
+			 if(typeof arg === 'function'){
+			 	callback = arg;
+			 	delay = 1000;
+			 }
+			showmsg(msg,delay,callback);
+		},
+		showloading: function(msg,delay,callback){
+			return showloading(msg,delay,callback);
+		},
+	})
+	
+	$.extend($.fn , {
+			getWindow: function(){
+				return new WindowPlugin(this);
+			},
+			getSlideWindow:function(options){
+				var _this = $(this);
+				options.ele = _this;
+				return new SlideWindow(options)
+			}
+	})
+
+
+
 })()

@@ -7,18 +7,20 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0,  maximum-scale=1.0" />
 <title>用户详情</title>
-<link href="${pageContext.request.contextPath }/${serverId }/css/global.css" rel="stylesheet" type="text/css">
+ <link href="${pageContext.request.contextPath }/${serverId }/css/global.css" rel="stylesheet" type="text/css">
+ <link href="${pageContext.request.contextPath }/${serverId }/common/common.css" rel="stylesheet" type="text/css">
 <style type="text/css">
 html{font-size:14px;}
 body{margin:0;padding:0}
 .header{background: url('./images/background.jpg') no-repeat;background-size: 100%; width: 100%;height: 180px;}
-.header-info{position: absolute;top: 20px;width: 100%;height: 300px;}
-.header-img{width: 100%;text-align: center;}
+.header-info{position: absolute;top: 0;left: 0;width: 100%;height: 300px;height: 180px;}
+.header-img{width: 100%;text-align: center;margin-top: 20px;}
 .header-info>.user-name{font-size: 16px;margin-top: 5px;}
 .header-img>img{display: inline-block; width: 80px;height: 80px;border-radius: 50%}
 .header-info{width: 100%; text-align: center;color:#fff;}
 .blog-info{padding: 5px 0;}
-.main{margin-top: 20px;}
+.setting{top: 0;right: 0;width: 40px;height: 40px;position: absolute;background: url('./images/set.jpg') no-repeat;background-size: 85%; }
+.main{margin-top: 20px;width: 100%;overflow: hidden;}
 .nav{display: flex;}
 .nav>div{width: 100%;text-align: center;position: relative;padding: 5px 0;}
 .nav .active:after{content: '';position: absolute;width: 50%;height: 2px;background: #337ab7;bottom: 1px;left:25%;}
@@ -28,6 +30,16 @@ body{margin:0;padding:0}
 .blog{width: 100%; height: 300px;display: flex;align-items:center; justify-content: center;font-size: 18px;}
 .align-c{text-align: center;}
 .no-data{font-size: 16px; color: #888;}
+.user-setting-page{padding: 0 5px }
+.op-nav{padding: 10px 15px;border-bottom: 1px solid #888;text-align: center;}
+.op-nav>div{width: 50%; font-size: 18px;}
+.op-nav div:nth-child(2){color: #337ab7;border-left:1px solid #888;}
+.setting-item{padding: 15px; border-bottom: 1px solid #eee;align-items: center;}
+.setting-item>img{width: 30px;height: 30px;border-radius: 50%;}
+.setting-item div:nth-child(1){width: 100%;flex: 1}
+.arrow_right{background: url('${pageContext.request.contextPath }/${serverId }/images/arrow_right.jpg') no-repeat center right;}
+.arrow_right{background-size: 25px;}
+.setting-item-right{margin-right: 15px;}
 </style>
 </head>
 	<body>
@@ -44,6 +56,7 @@ body{margin:0;padding:0}
 					<span> 转载  0 |</span>
 					<span>收藏 0 </span>
 				</div>
+				<div class="setting" id="iSettingBtn"></div>
 			</div>
 			
 			<div class="main">
@@ -85,6 +98,39 @@ body{margin:0;padding:0}
 				</div>
 			</div>
 		</div>
+		
+		
+	<!-- 用户信息设置弹窗 -->
+	<div id="iUserSetting" class="user-setting-page">
+		<section class="flex op-nav">
+			<div class="cancel">取消</div>
+			<div class="submit">保存</div>
+		</section>
+		<section class="flex setting-item arrow_right">
+			<div>头像</div>
+			<img class="setting-item-right" alt="" src="http://www.ajie18.top/images/logo.jpg">
+		</section>
+		<section class="flex setting-item arrow_right">
+			<div>昵称</div>
+			<div class="setting-item-right" >无</div>
+		</section>
+		<section  class="flex setting-item arrow_right">
+			<div>性别</div>
+			<div class="setting-item-right" >保密</div>
+		</section>
+		<section class="flex setting-item arrow_right">
+			<div>地址</div>
+			<div class="setting-item-right" >不详</div>
+		</section>
+		<section class="flex setting-item arrow_right">
+			<div>简介</div>
+			<div class="setting-item-right" >无</div>
+		</section>
+		<section class="flex setting-item arrow_right">
+			<div>修改密码</div>
+		</section>
+	</div>
+	
 	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
 	
 	<script>
@@ -114,5 +160,6 @@ body{margin:0;padding:0}
 			
 		})()
 	</script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/common/common.js"></script>
 	<script src="js/userinfo.js"></script>
 </html>

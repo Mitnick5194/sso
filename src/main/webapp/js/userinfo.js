@@ -1,5 +1,7 @@
 (function(){
 	var userinfo = $("#iUserInfo");
+	var userSetting = $("#iUserSetting");
+	var userSettingWin = userSetting.getSlideWindow({title: "我的"});
 	getuser(id,function(data){
 		userinfo.find(".userName").html(data.nickname || data.name);
 		userinfo.find(".userHeader").attr("src",data.header);
@@ -50,4 +52,19 @@
 		var id = $(this).attr("data-id");
 		location.href = "blog.do?id="+id;
 	})
+	
+	$("#iSettingBtn").on("click",function(){
+		userSettingWin.show();
+		window.history.pushState(null, null, "#");
+	})
+	
+	userSetting.on("click",".cancel",function(){
+		userSettingWin.hide();
+	}).on("click",".submit",function(){
+		userSettingWin.hide();
+	})
+	
+    window.onpopstate = function() {
+		userSettingWin.hide();
+    }; 
 })()

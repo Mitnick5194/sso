@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ajie.chilli.cache.redis.RedisClient;
 import com.ajie.chilli.cache.redis.RedisException;
+import com.ajie.dao.pojo.TbUser;
 
 /**
  * 登录信息过期，当服务器关闭时，删除所有的登录信息，但是需要规范关闭服务器才回执行关闭hook
@@ -18,8 +19,8 @@ import com.ajie.chilli.cache.redis.RedisException;
  * @author niezhenjie
  *
  */
-public class RedisWatch extends Thread {
-	private static final Logger logger = LoggerFactory.getLogger(RedisWatch.class);
+public class RedisUser extends Thread {
+	private static final Logger logger = LoggerFactory.getLogger(RedisUser.class);
 	private RedisClient redisClient;
 	/** 键是key，值是创建时间 */
 	private Map<String, Date> map;
@@ -28,7 +29,7 @@ public class RedisWatch extends Thread {
 
 	protected final String HOOK_THREAD_NAME = "redis-hook";
 
-	public RedisWatch(RedisClient redisClient, long expire) {
+	public RedisUser(RedisClient redisClient, long expire) {
 		this.redisClient = redisClient;
 		map = new HashMap<String, Date>();
 		this.expire = expire;
@@ -40,7 +41,35 @@ public class RedisWatch extends Thread {
 		if (null == key) {
 			return;
 		}
-		map.put(key, new Date());
+		synchronized (map) {
+			map.put(key, new Date());
+		}
+	}
+
+	/**
+	 * 获取缓存用户，需要检查key的过期时间
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public TbUser getUser(String key) {
+		if (map.isEmpty()) {
+			return null;
+		}
+		Date date = map.get(key);
+		if (isExpire(date)) {
+			// 过期了
+			return null;
+		}
+		try {
+			TbUser user = redisClient.hgetAsBean(UserService.REDIS_PREFIX, key, TbUser.class);
+			if (null != user)
+				update(key);// 更新一下时间
+			return user;
+		} catch (RedisException e) {
+			logger.warn("无法从redis缓存中获取TbUser,token=" + key, e);
+		}
+		return null;
 	}
 
 	/**
@@ -66,6 +95,19 @@ public class RedisWatch extends Thread {
 	}
 
 	/**
+	 * 指定时间是否过期
+	 * 
+	 * @param date
+	 * @return 过期返回true false表示未过期
+	 */
+	private boolean isExpire(Date date) {
+		long now = System.currentTimeMillis();
+		if (date.getTime() + (expire * 1000) > now)
+			return false;
+		return true;
+	}
+
+	/**
 	 * 更新存活时间
 	 * 
 	 * @param key
@@ -78,36 +120,36 @@ public class RedisWatch extends Thread {
 		if (null == date) {
 			return;
 		}
-		date = new Date();
+		synchronized (map) {
+			map.put(key, new Date());
+		}
 	}
 
 	public void work() {
 		if (map.isEmpty()) {
 			return;
 		}
-		Iterator<Map.Entry<String, Date>> it = map.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<String, Date> entry = it.next();
-			String key = entry.getKey();
-			Date createDate = entry.getValue();
-			Date now = new Date();
-			if (createDate.getTime() + expire * 1000 < now.getTime()) {
-				// 过期了
-				try {
-					redisClient.hdel(UserService.REDIS_PREFIX, key);
-					synchronized (map) {
+		synchronized (map) {
+			Iterator<Map.Entry<String, Date>> it = map.entrySet().iterator();
+			while (it.hasNext()) {
+				Entry<String, Date> entry = it.next();
+				String key = entry.getKey();
+				Date createDate = entry.getValue();
+				if (isExpire(createDate)) {
+					// 过期了
+					try {
+						redisClient.hdel(UserService.REDIS_PREFIX, key);
 						it.remove();// 删除
+						if (logger.isTraceEnabled()) {
+							logger.info("定时任务【" + Thread.currentThread().getName()
+									+ "】清除redis登录信息【" + key + "】");
+						}
+					} catch (RedisException e) {
+						logger.error("定时清除redis登录信息失败", e);
 					}
-					if (logger.isTraceEnabled()) {
-						logger.info("定时任务【" + Thread.currentThread().getName() + "】清除redis登录信息【"
-								+ key + "】");
-					}
-				} catch (RedisException e) {
-					logger.error("定时清除redis登录信息失败", e);
 				}
 			}
 		}
-
 	}
 
 	@Override
@@ -119,7 +161,7 @@ public class RedisWatch extends Thread {
 	/**
 	 * 关闭服务器同步删除相关redis
 	 */
-	protected void shutdownHook() {
+	protected void shutdownHook() { 
 		try {
 			redisClient.hdel(UserService.REDIS_PREFIX);
 			logger.info("系统退出，登录信息已清除");

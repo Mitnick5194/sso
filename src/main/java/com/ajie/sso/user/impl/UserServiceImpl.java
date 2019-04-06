@@ -32,7 +32,7 @@ import com.ajie.dao.pojo.TbUserExample;
 import com.ajie.dao.pojo.TbUserExample.Criteria;
 import com.ajie.sso.role.Role;
 import com.ajie.sso.role.RoleUtils;
-import com.ajie.sso.user.RedisWatch;
+import com.ajie.sso.user.RedisUser;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
 import com.ajie.web.utils.CookieUtils;
@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService, Worker {
 	@Resource
 	private String userDefalutHeader;
 	/** 定时删除 redis登录信息 */
-	private RedisWatch watch;
+	private RedisUser watch;
 
 	public UserServiceImpl() {
 		String ymd = TimeUtil.formatYMD(new Date());
@@ -165,42 +165,25 @@ public class UserServiceImpl implements UserService, Worker {
 	public TbUser getUserByToken(String token) throws UserException {
 		if (null == token)
 			return null;
-		TbUser user = null;
-		try {
-			user = getUserFromRedis(token);
-		} catch (RedisException e) {
-			logger.warn("无法从redis中加载TbUser,token=" + token, e);
-		}
-		return user;
+		return getUserFromRedis(token);
 	}
 
 	@Override
 	public TbUser getUser(HttpServletRequest request) {
 		Cookie[] cookies = request.getCookies();
 		String key = null;
-		Cookie ck = null;
 		for (Cookie cookie : cookies) {
 			String name = cookie.getName();
 			if (UserService.COOKIE_KEY.equals(name)) {
 				key = cookie.getValue();
-				ck = cookie;
 				break;
 			}
 		}
 		if (null == key) {
 			return null;
 		}
-		try {
-			TbUser user = getUserFromRedis(key);
-			if (null == user) {
-				// key不为空，但是信息为空，删除request的缓存信息吧
-				ck.setMaxAge(0);
-			}
-			getWatch().update(key);// 因过滤器每次都会调用这个方法，所以在这个方法里更新
-			return user;
-		} catch (RedisException e) {
-			return null;
-		}
+		TbUser user = getUserFromRedis(key);
+		return user;
 	}
 
 	@Override
@@ -260,18 +243,25 @@ public class UserServiceImpl implements UserService, Worker {
 	private boolean putintoRedis(String key, TbUser user) throws RedisException {
 		boolean b = false;
 		redisClient.hset(REDIS_PREFIX, key, user);
-		getWatch().register(key);
+		getRedisUser().register(key);
 		b = true;
 		return b;
 	}
 
-	private TbUser getUserFromRedis(String key) throws RedisException {
-		TbUser user = redisClient.hgetAsBean(REDIS_PREFIX, key, TbUser.class);
-		return user;
+	private TbUser getUserFromRedis(String key) {
+		return getRedisUser().getUser(key);
 	}
 
+	/**
+	 * 不用设置过期时间，使用redis缓存控制过期时间，因为如果使用cookie的过期时间，每次请求都要刷新cookie的过期时间，
+	 * 则获取用户的接口需要调整为传入httpservletresponse，由于接口一开始没有这参数，所以不打算调整接口了，不过期吧
+	 * 
+	 * @param request
+	 * @param response
+	 * @param value
+	 */
 	private void setCookie(HttpServletRequest request, HttpServletResponse response, String value) {
-		CookieUtils.setCookie(request, response, COOKIE_KEY, value,REDIS_EXPIRE);
+		CookieUtils.setCookie(request, response, COOKIE_KEY, value);
 	}
 
 	public void loadRoles() {
@@ -319,15 +309,15 @@ public class UserServiceImpl implements UserService, Worker {
 		this.userDefalutHeader = header;
 	}
 
-	private RedisWatch getWatch() {
+	private RedisUser getRedisUser() {
 		if (null == watch) {
-			watch = new RedisWatch(redisClient, REDIS_EXPIRE);
+			watch = new RedisUser(redisClient, COOKIE_EXPIRE);
 		}
 		return watch;
 	}
 
 	@Override
 	public void work() {
-		getWatch().work();
+		getRedisUser().work();
 	}
 }

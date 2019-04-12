@@ -211,6 +211,8 @@
  	var content = $(ele);
  	var contentWidth = content.width();
  	var contentHeight = content.height();
+ 	//隐藏content,不然页面显示出来的时间太长，不雅观
+ 	content.hide();
  	var win = $(window);
  	var plugin = this;
  	var mask = $("<div/>").addClass("window-plugin-background").appendTo(BODY);
@@ -220,8 +222,8 @@
  	content.appendTo(dialog).css({
  		width: contentWidth,
  		contentHeight:contentHeight
- 	});
-	var clickbackhide = true; //点击背景关闭 默认不关闭
+ 	}).show();//因为上面隐藏了
+	var clickbackhide = true; //点击背景关闭 默认关闭
 	var callbackafterclose; //关闭后回调
 	this.setCallbackafterclose = function (callbackafterclose) {
 		this.callbackafterclose = callbackafterclose;
@@ -253,20 +255,21 @@
 			hideWindow(callback);
 		} , 500)
 	}
-	this.destory = function(){
-		dialog && dialog.remove();
-		mask && mask.remove();
-	}
 	this.setCloser = function(bool) { //显示||隐藏X关闭图标
 		var b = typeof bool ==='boolean' ? bool :  true;
 		if(b) {
 			closer.show();
-		}else {
+		} else {
 			closer.hide();
 		}
 	}
 	this.center = function(){
 		center();
+	}
+
+	this.destory = function(){
+		dialog && dialog.remove();
+		mask && mask.remove();
 	}
 	
 	if(clickbackhide) {
@@ -289,9 +292,9 @@
 		 	}
 		 }
 		}
-		closer.bind("click" , function() {
-			plugin.hide();
-		})
+	closer.bind("click" , function() {
+		plugin.hide();
+	})
 	function center(){ //使居中
 		var height = WIN.height();
 		var width = WIN.width();
@@ -339,11 +342,27 @@
 		 zIndex: 1500,
 		 title: "",//滑出后title显示内容
 	 },options)
-	 var mask = $("<div>").addClass("slide-win-mask").appendTo(BODY);
-	 var dialog = $("<div>").addClass("slide-win-dialog").appendTo(BODY).append(opts.ele).css({"z-index":opts.zIndex});
+	 var mask = $("<div>").addClass("slide-win-mask").appendTo(BODY).addClass("hidden");
+	 var dialog = $("<div>").addClass("slide-win-dialog").appendTo(BODY).append(opts.ele).css({"z-index":opts.zIndex}).addClass("hidden");
 	 var direction = opts.direction;
+	 var id = opts.ele.attr("id");
+	 var anchor = null;
+	  if(id){
+	  	anchor = hash(id);
+	  }else{
+		anchor = new Date().getTime();
+	  }
+
 	 (function(){
+	 	var ele = opts.ele;
+	 	if(ele.hasClass("hidden")){
+	 		ele.removeClass("hidden");
+	 	}else{
+	 		opts.ele.show();
+	 	}
 		trans("hide");
+		mask.removeClass("hidden");
+		dialog.removeClass("hidden");
 	 })()
 
 	 /**
@@ -369,6 +388,8 @@
 	 }
 
 	 function show(title , callback){
+	 	//后退
+	 	window.history.pushState(null, null, "#"+anchor);
 	 	mask.removeClass("slide-win-mask-hide").addClass("slide-win-mask-show").show();
 	 	trans("show");
 	 	var oldTitle = DOC[0].title;
@@ -382,8 +403,11 @@
 	 		mask.hide();
 	 		clearTimeout(timing);
 	 	},timeout);
-	 	
 	 }
+
+	 window.onpopstate = function() {
+		hide();//监听后退
+	}
 
 	 function hide(callback){
 	 	mask.removeClass("slide-win-mask-show").addClass("slide-win-mask-hide").show();
@@ -480,6 +504,20 @@
      }
      return out;
  }
+
+ function hash(str){
+	var h = 0;
+	var len = str.length;
+	var t = 2147483648;
+	for (var i = 0; i < len; i++) {
+		h = 31 * h + str.charCodeAt(i);
+		if (h > 2147483647){
+			h %= t; //java int溢出则取模
+		} 
+	}
+	return h;
+ }
+
 	//扩展jquery
 	$.extend($,{
 		
@@ -629,6 +667,11 @@
 		showloading: function(msg,delay,callback){
 			return showloading(msg,delay,callback);
 		},
+
+		/**计算字符串的hash值*/
+		hash: function(str){
+			return hash(str);
+		}
 	})
 	
 	$.extend($.fn , {

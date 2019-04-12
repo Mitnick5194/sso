@@ -10,8 +10,8 @@
  <link href="${pageContext.request.contextPath }/${serverId }/css/global.css" rel="stylesheet" type="text/css">
  <link href="${pageContext.request.contextPath }/${serverId }/common/common.css" rel="stylesheet" type="text/css">
 <style type="text/css">
-html{font-size:14px;}
-body{margin:0;padding:0}
+html{font-size:14px;height: 100%;}
+body{margin:0;padding:0;height: 100%}
 .header{background: url('./images/background.jpg') no-repeat;background-size: 100%; width: 100%;height: 180px;}
 .header-info{position: absolute;top: 0;left: 0;width: 100%;height: 300px;height: 180px;}
 .header-img{width: 100%;text-align: center;margin-top: 20px;}
@@ -25,12 +25,12 @@ body{margin:0;padding:0}
 .nav>div{width: 100%;text-align: center;position: relative;padding: 5px 0;}
 .nav .active:after{content: '';position: absolute;width: 50%;height: 2px;background: #337ab7;bottom: 1px;left:25%;}
 .nav div+div{border-left: 1px solid #bbb;}
-.article{display: flex;width: 300%;padding: 10px;white-space: nowrap;transition: all .15s ease}
+.article{display: flex;width: 300%;padding: 10px;transition: all .15s ease}
 .article>div{width: 100%;padding: 10px;}
 .blog{width: 100%; height: 300px;display: flex;align-items:center; justify-content: center;font-size: 18px;}
 .align-c{text-align: center;}
 .no-data{font-size: 16px; color: #888;}
-.user-setting-page{padding: 0 5px }
+.user-setting-page{padding: 0 5px;display: none }
 .op-nav{padding: 10px 15px;border-bottom: 1px solid #888;text-align: center;}
 .op-nav>div{width: 50%; font-size: 18px;}
 .op-nav div:nth-child(2){color: #337ab7;border-left:1px solid #888;}
@@ -40,7 +40,51 @@ body{margin:0;padding:0}
 .arrow_right{background: url('${pageContext.request.contextPath }/${serverId }/images/arrow_right.jpg') no-repeat center right;}
 .arrow_right{background-size: 25px;}
 .setting-item-right{margin-right: 15px;}
+/* 博客内容 */
+.blogs>section{border-bottom: 1px solid #eee;padding: 20px 15px;background: #fff;}
+.blogs>section.darkModeActive{border-bottom: 1px solid #000;}
+.blogs .title{font-size: 22px;font-weight: bold;padding-bottom: 10px;cursor: pointer;}
+.abstract-content{padding-bottom: 10px;}
+.extract-list{display: flex;}
+.extract-list>div{width: 50%;white-space: nowrap;align-items: center;}
+.extract-list img{width: 25px;border-radius:50%;height: 25px;}
+.list-left>div,.list-right>div{margin-left: 10px;}
+.list-right{text-align: right;}
+.list-right div:nth-child(1){width:100%;border-right: 1px solid #888;padding-right: 10px;}
+.list-right>div{text-align: right;}
+.log-frame{width: 85%;min-height: 200px;word-wrap:break-word}
+.log-nav{padding: 10px;background: #337ab7;display: flex;white-space: nowrap;color: #fff;}
+.log-nav div:nth-child(1){width: 100%}
+.system-info{padding: 10px;border: 1px solid #eee;font-size:12px;}
+.page-log{padding: 10px;}
+.error-font{color: red;}
+.col-green{color:green}
+.col-red{color: red}
+/**PC桌面*/
+@media screen and (min-width: 1100px){
+	/* 隐藏菜单 */
+	.operating {display: none !important;}
+}
 </style>
+<link href="${ pageContext.request.contextPath }/${serverId}/common/common.css" rel="stylesheet" type="text/css">
+<link href="${ pageContext.request.contextPath }/${serverId}/css/global.css" rel="stylesheet" type="text/css">
+<link href="${ pageContext.request.contextPath }/${serverId}/plugin/suspend-btn.css" rel="stylesheet" type="text/css">
+<script type="text/javascript">
+//startTime文档执行到这里的时间戳,endTime文档加载完毕的时间戳
+var errMsg , errCount = 0,startTime = new Date().getTime(),endTime;
+window.addEventListener("error" , function(e){
+	/* console.log("监听到错误");
+	console.log(e);
+	alert(e.error +" \r\n  "+e.error.stack); */
+	errMsg = e.error;
+	if(e.error){
+		errMsg += "<br>"+e.error.stack;
+	}
+	++errCount;
+	pageLog();
+})
+
+</script>
 </head>
 	<body>
 		<div class="container">
@@ -63,38 +107,16 @@ body{margin:0;padding:0}
 				<div class="nav" id="iNav">
 					<div  data-idx="0" class="active">博文</div>
 					<div  data-idx="1" >分类</div>
-					<div data-idx="2">专栏</div>
+					<div data-idx="2">草稿箱</div>
 				</div>
 				<div id="iArticle" class="article">
-					<div class="blog">
-						站点尚未开通，敬请期待...
-				<!-- <script type="text/temp" id="iBlogTemp">
-						<section data-id="[id]" class="content-dv item">
-	           				<h2 class="content-dv-title" title="">
-	            				<span>[title]</span>
-	            			</h2>
-	            			<div class="summary">[content]</div>
-		 				 <div class="list-user-bar">
-		  					<section class="sec-left sec">
-		  					<div ><img class="user-header" src="[userHeader]" /></div>
-		  					<div class="inteval">[user]</div>
-		  					<div  class="inteval">[createDate]</div>
-		  				<div  class="color-gre labels">
-		  					[labels]
-		  					</div>
-		  			</section>
-		  			<section class="sec-right sec">
-		  				<div  class="inteval"><span class="color-gre">[readNum] </span>阅读</div>
-		  				<div><span class="color-gre">[commentNum] </span>评价</div>
-		  			</section>
-		 		 </div>
-			</section>
-	</script> -->	
+					<div class="blogs" id="iBlogs">
 					</div>
-					<div class="sort">
+					<div class="blogs sort">
 						<div class="align-c no-data">没有任何分类</div>
 					</div>
-					<div  class="column "><div class="align-c no-data">没有任何专类</div></div>
+					<div  class="blogs" id="iDraft">
+					</div>
 				</div>
 			</div>
 		</div>
@@ -102,10 +124,10 @@ body{margin:0;padding:0}
 		
 	<!-- 用户信息设置弹窗 -->
 	<div id="iUserSetting" class="user-setting-page">
-		<section class="flex op-nav">
+		<!-- <section class="flex op-nav">
 			<div class="cancel">取消</div>
 			<div class="submit">保存</div>
-		</section>
+		</section> -->
 		<section class="flex setting-item arrow_right">
 			<div>头像</div>
 			<img class="setting-item-right" alt="" src="http://www.ajie18.top/images/logo.jpg">
@@ -130,36 +152,108 @@ body{margin:0;padding:0}
 			<div>修改密码</div>
 		</section>
 	</div>
+	<div class="log-frame" id="iLogFrame">
+		<div class="log-nav"><div>页面日志</div><div>info：0 warn：0 <span class="logErr error-font">error: 0</span></div></div>
+		<div class="system-info"></div>
+		<div class="page-log"></div>
+	</div>
 	
+	<jsp:include page="/footer.jsp"></jsp:include>
 	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
-	
-	<script>
-	var id = "${id}";
-		(function(){
-			$("#iNav").on("click","div" , function(){
-				var _this = $(this);
-				if(_this.hasClass("active")){
-					return;
-				}
-				_this.siblings(".active").removeClass("active");
-				_this.addClass("active");
-				togglePage(this);
-			});
-			
-		   /**
-			* 点击导航条，切换视图
-			*
-			* @param navEle 导航条元素
-			*/
-			function togglePage(navEle){
-				var nav = $(navEle);
-				var idx = nav.attr("data-idx");
-				var dis = idx * (100 / 3);
-				$("#iArticle").css("transform","translateX(-"+dis+"%)")
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId}/common/common.js?d=2019"></script>
+	<script type="text/javascript">
+		//日志弹窗
+		var  logFrame = $("#iLogFrame").getWindow();
+		logFrame.setCloser(false);
+		logFrame.clickbackhide();
+		//页面错误日志
+		function pageLog(){
+			var userAgent = navigator.userAgent;
+			var frame =  $("#iLogFrame")
+			var supportCss3 = $.supportcss3;
+			var msg = "";
+			var sb = [];
+			sb.push("<div>系统：");
+			sb.push(userAgent);
+			if(supportCss3){
+				sb.push(" <span style='color: green'>正常</span>");
+			}else{
+				sb.push(" <span class='col-green'>异常</span>");
+				frame.find(".system-info").html("系统："+userAgent+" <span class='col-red'>异常</span>");
 			}
-			
-		})()
+			sb.push("</div>")
+			sb.push("<div>");
+			sb.push("是否支持微信js api调用：");
+			if($.isBrowser("weixin")){
+				sb.push("<span class='col-green'>是</span>")
+			}else{
+				sb.push("<span class='col-red'>否</span>")
+			}
+			sb.push("</div>");
+			frame.find(".system-info").html(sb.join(""));
+			sb = [];
+			sb.push("<div>");
+			sb.push("页面信息：");
+			//var pageLog ="页面信息：";
+			if(!errMsg) {
+				sb.push("<span style='color: green'>正常</span>");
+			} else {
+				frame.find(".logErr").html("error："+ errCount);
+				sb.push("<span style='color:red'>");
+				sb.push(errMsg);
+				sb.push("</span><br>");
+			}
+			sb.push("</div>");
+			sb.push("<div>");
+			sb.push("页面加载时间：");
+			if(!endTime){
+				endTime = startTime + 2000;
+			}
+			var interval = (endTime - startTime) / 1000;
+			sb.push("<span class='interval'>");
+			sb.push(interval);
+			sb.push("</span>");
+			sb.push("s");
+			sb.push("</div>")
+			sb.push("<div>")
+			sb.push("加载速度：");
+			if(interval < 2) {
+				sb.push("<span class='col-green'>快</span>")
+			} else if (interval <3) {
+				sb.push("<span class='col-green'>较快</span>")
+			} else if (interval <= 5) {
+				sb.push("<span class='col-red'>慢</span>")
+			} else if (interval > 5) {
+				sb.push("<span class='col-red'>高延迟</span>")
+			}
+			sb.push("</div>");
+			frame.find(".page-log").html(sb.join(""));
+			logFrame.show();
+		}
+	</script>
+	<script type="text/temp"  id="iBlogTemp">
+		<section class='darkMode'  data-id='[id]' >
+			<div class="title">[title]</div>
+			<div class="abstract-content">[abstractContent]</div>
+			<div class="extract-list">
+				<div class="list-left flex">
+					<img class='user' data-id='[userId]' data-type='userinfo'  src="[userHeader]">
+					<div class='user' data-id='[userId]' data-type='userinfo'>[user]</div>
+					<div>[createDate]</div>
+				</div>
+				<div class="list-right flex">
+					<div>阅读 [readNum]</div>
+					<div>评论 [commentNum]</div>
+				</div>
+			</div>
+		</section>
+	</script>
+	<script>
+		var id = "${id}";
+		var serverId = "${serverId}";
 	</script>
 	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/common/common.js"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/plugin/suspend-btn.js"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/global/suspend-btn-instance.js"></script>
 	<script src="js/userinfo.js"></script>
 </html>

@@ -171,6 +171,9 @@ public class UserServiceImpl implements UserService, Worker {
 	@Override
 	public TbUser getUser(HttpServletRequest request) {
 		Cookie[] cookies = request.getCookies();
+		if (null == cookies) {
+			return null;
+		}
 		String key = null;
 		for (Cookie cookie : cookies) {
 			String name = cookie.getName();

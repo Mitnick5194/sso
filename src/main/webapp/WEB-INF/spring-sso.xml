@@ -22,7 +22,7 @@
 		<property name="mode" value="intercept" />
 		<property name="uriList">
 			<list>
-				<value>/user/*</value>
+				<value>/sso/userinfo.do</value>
 			</list>
 		</property>
 		<property name="ssoHost" value="${sso-host}" />
@@ -31,7 +31,7 @@
 	<!-- 用户模块远程支持 -->
 	<bean id="remoteUserService" name="remoteUserService"
 		class="com.ajie.sso.user.impl.RemoteUserServiceImpl">
-		<constructor-arg index="0" value="http://localhost:8081/" />
+		<constructor-arg index="0" value="http://localhost:8081/sso/" />
 	</bean>
 
 	<!-- 用户默认头像路径 -->

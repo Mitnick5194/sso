@@ -133,7 +133,9 @@ public class RemoteUserServiceImpl implements UserService {
 		ResponseResult res = null;
 		String result = "";
 		try {
-			logger.info("请求连接" + url);
+			if (logger.isDebugEnabled()) {
+				logger.debug("method: getUserByToken,token:" + token + ",url:" + url);
+			}
 			result = HttpClientUtil.doGet(url, params, header);
 			res = getResponse(result);
 		} catch (IOException e) {
@@ -347,7 +349,7 @@ public class RemoteUserServiceImpl implements UserService {
 
 	private void assertResponse(ResponseResult response) throws UserException {
 		if (null == response)
-			throw new UserException("网络异常，请稍后再试试");
+			throw new UserException("请求结果为空，检查请求连接及网络");
 		int code = response.getCode();
 		if (ResponseResult.CODE_ERR == code)
 			throw new UserException(response.getMsg());
@@ -406,5 +408,10 @@ public class RemoteUserServiceImpl implements UserService {
 		Map<String, String> map = new HashMap<String, String>(1);
 		map.put(REMOTE_SERVER_INVOKE_KEY, REMOTE_SERVER_INVOKE_TOKEN);
 		return map;
+	}
+
+	@Override
+	public void logout(HttpServletRequest request, HttpServletResponse response) {
+		throw new UnsupportedOperationException();
 	}
 }

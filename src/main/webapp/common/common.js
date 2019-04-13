@@ -391,6 +391,9 @@
 	 	//后退
 	 	window.history.pushState(null, null, "#"+anchor);
 	 	mask.removeClass("slide-win-mask-hide").addClass("slide-win-mask-show").show();
+	 	//禁止页面滚动时下面的也跟着滚动
+ 		BODY.addClass("disable-scroll");
+ 		$("html").addClass("disable-scroll")
 	 	trans("show");
 	 	var oldTitle = DOC[0].title;
 	 	opts.oldTitle = oldTitle;
@@ -407,10 +410,13 @@
 
 	 window.onpopstate = function() {
 		hide();//监听后退
-	}
-
+	 }
+	 
 	 function hide(callback){
 	 	mask.removeClass("slide-win-mask-show").addClass("slide-win-mask-hide").show();
+		//解除禁止滑动
+ 		BODY.removeClass("disable-scroll");
+ 		$("html").removeClass("disable-scroll")
 	 	trans("hide");
 	 	DOC[0].title = opts.oldTitle;
 	 	var timing = setTimeout(function(){

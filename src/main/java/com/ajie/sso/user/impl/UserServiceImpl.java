@@ -162,6 +162,29 @@ public class UserServiceImpl implements UserService, Worker {
 	}
 
 	@Override
+	public void logout(HttpServletRequest request, HttpServletResponse response) {
+		Cookie[] cookies = request.getCookies();
+		if (null == cookies) {
+			// 已经退出了，或者客户端cookie过期了
+			return;
+		}
+		String key = null;
+		for (Cookie cookie : cookies) {
+			String name = cookie.getName();
+			if (UserService.COOKIE_KEY.equals(name)) {
+				key = cookie.getValue();
+				break;
+			}
+		}
+		if (null == key) {
+			// 已经退出了，或者客户端cookie过期了
+			return;
+		}
+		CookieUtils.setCookie(request, response, COOKIE_KEY, key, 0);
+		getRedisUser().remove(key);// 删除缓存数据
+	}
+
+	@Override
 	public TbUser getUserByToken(String token) throws UserException {
 		if (null == token)
 			return null;

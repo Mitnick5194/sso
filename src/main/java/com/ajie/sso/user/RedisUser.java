@@ -14,7 +14,7 @@ import com.ajie.chilli.cache.redis.RedisException;
 import com.ajie.dao.pojo.TbUser;
 
 /**
- * 登录信息过期，当服务器关闭时，删除所有的登录信息，但是需要规范关闭服务器才回执行关闭hook
+ * 登录信息过期，当服务器关闭时，删除所有的登录信息，但是需要规范关闭服务器才回执行关闭hook，系统单例
  *
  * @author niezhenjie
  *

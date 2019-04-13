@@ -2,7 +2,9 @@
 	var userinfo = $("#iUserInfo");
 	var userSetting = $("#iUserSetting");
 	var userSettingWin = userSetting.getSlideWindow({title: "我的"});
+	var userData = null;
 	getuser(id,function(data){
+		userData = data;
 		userinfo.find(".userName").html(data.nickname || data.name);
 		userinfo.find(".userHeader").attr("src",data.header);
 	})
@@ -32,6 +34,7 @@
 		var blogs = data ||[];
 		var sb = handleBlogTemp(blogs);
 		$("#iBlogs").html(sb.join(""));
+		getBlogCount();
 	});
 	
 	function handleBlogTemp(blogs){
@@ -41,7 +44,7 @@
 			var labelsStr = blog.labels;
 			if(labelsStr){
 				var labels = labelsStr.split(",");
-				//标签处理一下
+				// 标签处理一下
 				var lab = [];
 				for(let i=0;i<labels.length;i++){
 					lab.push("<span class='label'>"+labels[i]+"</span>");
@@ -55,8 +58,11 @@
 	
 	/**
 	 * 加载数据
-	 * @param t 类型
-	 * @param b 回调
+	 * 
+	 * @param t
+	 *            类型
+	 * @param b
+	 *            回调
 	 */
 	function loadblogs(t,b) {
 		var type,callback;
@@ -70,26 +76,16 @@
 		}
 		var loading = $.showloading("加载中");
 		var host = location.host;
-		var url;
-		//本机
-		if(host.indexOf("localhost") > -1 ||host.indexOf("127.0") > -1 || host.indexOf("10.8") > -1){
-			url = "http://localhost:8080/blog/myblogs.do";
-		}else if(serverId == 'xff'){ //代理本机
-			url = "http://www.ajie18.top/ajie/blog/myblogs.do";
-		}
-		else{
-			url = "http://www.ajie18.top/blog/myblogs.do";
-		}
+		var url = getBlogHost("myblogs.do");
 		$.ajax({
 			type: 'post',
 			dataType: 'JSONP',
-		    jsonpCallback: 'callback',//success后会进入这个函数，如果不声明，也不会报错，直接在success里处理也行
+		    jsonpCallback: 'callback',// success后会进入这个函数，如果不声明，也不会报错，直接在success里处理也行
 			data:{
 				type: type
 			},
 			url: url,
 			success: function(data) {
-				console.log(data);
 				if(data.code != 200){
 					$.showToast(data.msg);
 					return;
@@ -101,10 +97,35 @@
 			},
 			complete: function(){
 				loading.hide();
-				//在文档加载时已经判断了是不是夜间模式，但是异步加载的节点比较慢，所以需要手动再判断一下是不是夜间
-//				if($.isDarkMode()){
-//					$.toggleDarkMode($.isDarkMode())
-//				}
+				// 在文档加载时已经判断了是不是夜间模式，但是异步加载的节点比较慢，所以需要手动再判断一下是不是夜间
+// if($.isDarkMode()){
+// $.toggleDarkMode($.isDarkMode())
+// }
+			}
+			
+		})
+	}
+	
+	function getBlogCount(){
+		var url = getBlogHost("getblogcount");
+		$.ajax({
+			type: 'post',
+			dataType: 'JSONP',
+		    jsonpCallback: 'callback',// success后会进入这个函数，如果不声明，也不会报错，直接在success里处理也行
+			data:{
+				id: id
+			},
+			url: url,
+			success: function(data) {
+				if(data.code != 200){
+					$.showToast(data.msg);
+					return;
+				}
+				userinfo.find(".blogNum").html("原创"+data.data+" |");
+			},
+			fail: function(e) {
+			},
+			complete: function(){
 			}
 			
 		})
@@ -121,10 +142,11 @@
 	});
 	
    /**
-	* 点击导航条，切换视图
-	*
-	* @param navEle 导航条元素
-	*/
+	 * 点击导航条，切换视图
+	 * 
+	 * @param navEle
+	 *            导航条元素
+	 */
 	function togglePage(navEle){
 		var nav = $(navEle);
 		var idx = nav.attr("data-idx");
@@ -141,7 +163,7 @@
 		handleTogglePage(idx);
 	}
 	
-	var cacheDrafts;//草稿箱博客
+	var cacheDrafts;// 草稿箱博客
 	/**
 	 * 切换导航条动作完成后加载数据
 	 * 
@@ -152,13 +174,13 @@
 			return;
 		}
 		if(idx == 1){
-			//加载分类 TODO
+			// 加载分类 TODO
 		}
 		if(idx == 2){
 			if(cacheDrafts){
 				return;
 			}
-			//草稿箱
+			// 草稿箱
 			loadblogs("draft",function(data){
 				var blogs = data ||[];
 				cacheDrafts = blogs;
@@ -173,13 +195,84 @@
 		location.href = "blog.do?id="+id;
 	})
 	
+	var settingLoad = false;//是否已经打开过，打开过就没有必要再设置信息了
 	$("#iSettingBtn").on("click",function(){
+		if(settingLoad){
+			userSettingWin.show();
+		}
+		if(!userData){
+			userSettingWin.show();
+			return;
+		}
+		var header = userData.header;
+		var name = userData.name;
+		var nickName = userData.nickName;
+		var sex = userData.sex;
+		var address = userData.address;
+		var synopsis = userData.synopsis;
+		if(header){
+			userSetting.find(".userHeader").attr("src",header);
+		}
+		if(name){
+			userSetting.find(".name").html(name);
+		}
+		if(nickName){
+			userSetting.find(".nickName").html(nickName);
+		}
+		if(sex){
+			userSetting.find(".sex").html(sex);
+		}
+		if(address){
+			userSetting.find(".address").html(address);
+		}
+		if(synopsis){
+			userSetting.find(".synopsis").html(synopsis);
+		}
+		settingLoad = true;
 		userSettingWin.show();
 	})
 	
-	/*userSetting.on("click",".cancel",function(){
-		userSettingWin.hide();
-	}).on("click",".submit",function(){
-		userSettingWin.hide();
-	})*/
+	$("#iBlogs").on("click","section",function(){
+		var id = $(this).attr("data-id");
+		location.href = getBlogHost("blog")+"?id="+id;
+	})
+	
+	$("#iDraft").on("click","section",function(){
+		var id = $(this).attr("data-id");
+		var form = $("#iForm");
+		var url = getBlogHost("addblog");
+		form.attr("action",url).attr("method","post");
+		form.find("input").eq(0).val(id);
+		form.submit();
+	})
+	
+	//退出登录
+	$("#iLogoutBtn").on("click",function(){
+		$.ajax({
+			type: "post",
+			url: "logout.do",
+			success: function(data){
+				if(data.code != 200){
+					$.showToast(data.msg);
+					return;
+				}
+				location.href = getBlogHost("index");
+			}
+		})
+	})
+	
+	function getBlogHost(biz){
+		var host = location.host;
+		var url;
+		if(host.indexOf("localhost") > -1 ||host.indexOf("127.0") > -1 || host.indexOf("10.8") > -1){
+			url = "http://localhost:8080/blog/"+biz+".do";
+		}else if(serverId == 'xff'){
+			url = "http://www.ajie18.top/ajie/blog/"+biz+".do";
+		}
+		else{
+			url = "http://www.ajie18.top/blog/"+biz+".do";
+		}
+		return url;
+	}
+	
 })()

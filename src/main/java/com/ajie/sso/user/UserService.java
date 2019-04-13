@@ -85,6 +85,15 @@ public interface UserService {
 			HttpServletResponse response) throws UserException;
 
 	/**
+	 * 登出
+	 * 
+	 * @param key
+	 * @param password
+	 * @return
+	 */
+	void logout(HttpServletRequest request, HttpServletResponse response);
+
+	/**
 	 * 使用token登录
 	 * 
 	 * @param token

@@ -9,6 +9,7 @@
 <title>用户详情</title>
  <link href="${pageContext.request.contextPath }/${serverId }/css/global.css" rel="stylesheet" type="text/css">
  <link href="${pageContext.request.contextPath }/${serverId }/common/common.css" rel="stylesheet" type="text/css">
+ <link href="${ pageContext.request.contextPath }/${serverId}/plugin/suspend-btn.css" rel="stylesheet" type="text/css">
 <style type="text/css">
 html{font-size:14px;height: 100%;}
 body{margin:0;padding:0;height: 100%}
@@ -16,7 +17,7 @@ body{margin:0;padding:0;height: 100%}
 .header-info{position: absolute;top: 0;left: 0;width: 100%;height: 300px;height: 180px;}
 .header-img{width: 100%;text-align: center;margin-top: 20px;}
 .header-info>.user-name{font-size: 16px;margin-top: 5px;}
-.header-img>img{display: inline-block; width: 80px;height: 80px;border-radius: 50%}
+.header-img>img{display: inline-block; width: 70px;height: 70px;border-radius: 50%}
 .header-info{width: 100%; text-align: center;color:#fff;}
 .blog-info{padding: 5px 0;}
 .setting{top: 0;right: 0;width: 40px;height: 40px;position: absolute;background: url('./images/set.jpg') no-repeat;background-size: 85%; }
@@ -30,7 +31,7 @@ body{margin:0;padding:0;height: 100%}
 .blog{width: 100%; height: 300px;display: flex;align-items:center; justify-content: center;font-size: 18px;}
 .align-c{text-align: center;}
 .no-data{font-size: 16px; color: #888;}
-.user-setting-page{padding: 0 5px;display: none }
+.user-setting-page{padding: 0 5px;display: none;}
 .op-nav{padding: 10px 15px;border-bottom: 1px solid #888;text-align: center;}
 .op-nav>div{width: 50%; font-size: 18px;}
 .op-nav div:nth-child(2){color: #337ab7;border-left:1px solid #888;}
@@ -60,15 +61,14 @@ body{margin:0;padding:0;height: 100%}
 .error-font{color: red;}
 .col-green{color:green}
 .col-red{color: red}
+.logout-btn{width: calc(100% - 70px);width:-webkit-calc(100% - 70px) ; height: 40px;line-height: 40px;margin: 0 auto;text-align: center;border-radius: 5px;color:#fff;background: #337ab7;position: fixed;bottom: 10px;left: 35px;}
 /**PC桌面*/
 @media screen and (min-width: 1100px){
 	/* 隐藏菜单 */
 	.operating {display: none !important;}
 }
 </style>
-<link href="${ pageContext.request.contextPath }/${serverId}/common/common.css" rel="stylesheet" type="text/css">
-<link href="${ pageContext.request.contextPath }/${serverId}/css/global.css" rel="stylesheet" type="text/css">
-<link href="${ pageContext.request.contextPath }/${serverId}/plugin/suspend-btn.css" rel="stylesheet" type="text/css">
+
 <script type="text/javascript">
 //startTime文档执行到这里的时间戳,endTime文档加载完毕的时间戳
 var errMsg , errCount = 0,startTime = new Date().getTime(),endTime;
@@ -121,37 +121,43 @@ window.addEventListener("error" , function(e){
 			</div>
 		</div>
 		
+		<!-- 表单，跳转到编辑草稿 -->
+		<form class="hidden" id="iForm">
+			<input name="id" />
+		</form>
 		
-	<!-- 用户信息设置弹窗 -->
-	<div id="iUserSetting" class="user-setting-page">
-		<!-- <section class="flex op-nav">
-			<div class="cancel">取消</div>
-			<div class="submit">保存</div>
-		</section> -->
-		<section class="flex setting-item arrow_right">
-			<div>头像</div>
-			<img class="setting-item-right" alt="" src="http://www.ajie18.top/images/logo.jpg">
-		</section>
-		<section class="flex setting-item arrow_right">
-			<div>昵称</div>
-			<div class="setting-item-right" >无</div>
-		</section>
-		<section  class="flex setting-item arrow_right">
-			<div>性别</div>
-			<div class="setting-item-right" >保密</div>
-		</section>
-		<section class="flex setting-item arrow_right">
-			<div>地址</div>
-			<div class="setting-item-right" >不详</div>
-		</section>
-		<section class="flex setting-item arrow_right">
-			<div>简介</div>
-			<div class="setting-item-right" >无</div>
-		</section>
-		<section class="flex setting-item arrow_right">
-			<div>修改密码</div>
-		</section>
-	</div>
+		<!-- 用户信息设置弹窗 -->
+		<div id="iUserSetting" class="user-setting-page" >
+			<section class="flex setting-item arrow_right">
+				<div>头像</div>
+				<img class="setting-item-right userHeader">
+			</section>
+			<section class="flex setting-item arrow_right">
+				<div>用户名</div>
+				<div class="setting-item-right name">无</div>
+			</section>
+			<section class="flex setting-item arrow_right userName">
+				<div>昵称</div>
+				<div class="setting-item-right nickName">无</div>
+			</section>
+			<section class="flex setting-item arrow_right">
+				<div>性别</div>
+				<div class="setting-item-right sex" >保密</div>
+			</section>
+			<section class="flex setting-item arrow_right">
+				<div>地址</div>
+				<div class="setting-item-right address">不详</div>
+			</section>
+			<section class="flex setting-item arrow_right">
+				<div>简介</div>
+				<div class="setting-item-right synopsis">无</div>
+			</section>
+			<section class="flex setting-item arrow_right">
+				<div>修改密码</div>
+			</section>
+			
+			<div class="logout-btn" id="iLogoutBtn">退出登录</div>
+		</div>
 	<div class="log-frame" id="iLogFrame">
 		<div class="log-nav"><div>页面日志</div><div>info：0 warn：0 <span class="logErr error-font">error: 0</span></div></div>
 		<div class="system-info"></div>
@@ -160,7 +166,7 @@ window.addEventListener("error" , function(e){
 	
 	<jsp:include page="/footer.jsp"></jsp:include>
 	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
-	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId}/common/common.js?d=2019"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId}/common/common.js"></script>
 	<script type="text/javascript">
 		//日志弹窗
 		var  logFrame = $("#iLogFrame").getWindow();
@@ -252,7 +258,6 @@ window.addEventListener("error" , function(e){
 		var id = "${id}";
 		var serverId = "${serverId}";
 	</script>
-	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/common/common.js"></script>
 	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/plugin/suspend-btn.js"></script>
 	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/global/suspend-btn-instance.js"></script>
 	<script src="js/userinfo.js"></script>

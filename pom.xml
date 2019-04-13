@@ -140,7 +140,7 @@
 						</goals>
 						<phase>package</phase>
 						<configuration>
-							<outputDirectory>target/user</outputDirectory>
+							<outputDirectory>D:\maven\repository\com\ajie\sso-user\1.0.10</outputDirectory>
 							<classifier>user-1.0.10</classifier>
 							<includes>
 								<include>**/role/**</include>
@@ -164,8 +164,8 @@
 							<goal>jar-no-fork</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>target/user</outputDirectory>
-							<classifier>user-resource-1.0.10</classifier>
+							<outputDirectory>D:\maven\repository\com\ajie\sso-user\1.0.10</outputDirectory>
+							<classifier>user-1.0.10-resource</classifier>
 							<includes>
 								<include>**/role/**</include>
 								<include>**/user/**</include>

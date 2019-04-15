@@ -203,26 +203,27 @@
  }
 
 /**
- * 弹窗
+ * 弹窗，为了体验更好，用作弹窗的元素应该指定显示为none，否则在构造前会显示出来，不雅观
  * 
  * @param ele 弹出个内容元素
  */
  function WindowPlugin(ele) {
  	var content = $(ele);
+ 	//因为元素可能再次之前已经隐藏了（隐藏也有宽高，隐藏只是不显示，不是宽高为0），所以需要获取一下他的宽高，不重新指定宽高显示出来并不会是初识时的宽高
  	var contentWidth = content.width();
  	var contentHeight = content.height();
- 	//隐藏content,不然页面显示出来的时间太长，不雅观
+ 	content.css({
+ 		width: contentWidth,
+ 		contentHeight:contentHeight
+ 	})
+ 	//可能没有隐藏，手动隐藏content,不然页面显示出来的时间太长，不雅观
  	content.hide();
  	var win = $(window);
  	var plugin = this;
- 	var mask = $("<div/>").addClass("window-plugin-background").appendTo(BODY);
- 	var dialog = $("<div/>").addClass("window-plugin-dialog").appendTo(BODY);
- 	var closer = $("<span/>").addClass("window-plugin-closer").appendTo(dialog).attr("title", "关闭");
- 	
- 	content.appendTo(dialog).css({
- 		width: contentWidth,
- 		contentHeight:contentHeight
- 	}).show();//因为上面隐藏了
+ 	var mask = $("<div/>").addClass("window-plugin-background");
+ 	var dialog = $("<div/>").addClass("window-plugin-dialog");
+ 	var closer = null;
+ 	content.appendTo(dialog).show();//content上面隐藏了
 	var clickbackhide = true; //点击背景关闭 默认关闭
 	var callbackafterclose; //关闭后回调
 	this.setCallbackafterclose = function (callbackafterclose) {
@@ -237,7 +238,7 @@
 			});
 		}
 	}
-	this.show = function() {
+	this.show = function(callback) {
 		mask.show();
 		dialog.show();
 		mask.removeClass("modal-background-hide");
@@ -245,6 +246,10 @@
 		mask.addClass("modal-background-show");
 		dialog.addClass("modal-dialog-show");	
 		center();
+		var timer = setTimeout(function() {
+			typeof callback === "function" && callback();
+			clearTimeout(timer);
+		},200)
 	}
 	this.hide = function(callback) {
 		mask.removeClass("modal-background-show");
@@ -255,8 +260,14 @@
 			hideWindow(callback);
 		} , 500)
 	}
-	this.setCloser = function(bool) { //显示||隐藏X关闭图标
+	this.setCloser = function(bool) { //显示||隐藏X关闭图标，默认是不显示的
 		var b = typeof bool ==='boolean' ? bool :  true;
+		if(!closer){
+				closer = $("<span/>").addClass("window-plugin-closer").attr("title", "关闭");
+				closer.bind("click" , function() {
+					plugin.hide();
+				})
+			}
 		if(b) {
 			closer.show();
 		} else {
@@ -292,9 +303,6 @@
 		 	}
 		 }
 		}
-	closer.bind("click" , function() {
-		plugin.hide();
-	})
 	function center(){ //使居中
 		var height = WIN.height();
 		var width = WIN.width();
@@ -326,6 +334,8 @@
 			})
 		}
 	});
+	mask.appendTo(BODY);
+	dialog.appendTo(BODY);
 }
  
  /**
@@ -339,11 +349,17 @@
 		 direction: "right", //方向，right从右边滑出，left从从边滑出,top从上面滑下，bottom从底部
 		 callback: null,//滑出后回调
 		 hidecallback: null,//收起后回调
-		 zIndex: 1500,
+		 zIndex: -1,//-1表示不设置，由css控制
 		 title: "",//滑出后title显示内容
 	 },options)
-	 var mask = $("<div>").addClass("slide-win-mask").appendTo(BODY).addClass("hidden");
-	 var dialog = $("<div>").addClass("slide-win-dialog").appendTo(BODY).append(opts.ele).css({"z-index":opts.zIndex}).addClass("hidden");
+	 var ele = opts.ele;
+	 ele.hide();//如果页面没隐藏，先隐藏，否则加载慢时会显示出来
+	 var mask = $("<div>").addClass("slide-win-mask");
+	 var dialog = $("<div>").addClass("slide-win-dialog").append(ele);
+	 ele.show();//上面隐藏了
+	 if(opts.zIndex >=0 ){
+	 	dialog.css({"z-index":opts.zIndex})
+	 }
 	 var direction = opts.direction;
 	 var id = opts.ele.attr("id");
 	 var anchor = null;
@@ -353,17 +369,7 @@
 		anchor = new Date().getTime();
 	  }
 
-	 (function(){
-	 	var ele = opts.ele;
-	 	if(ele.hasClass("hidden")){
-	 		ele.removeClass("hidden");
-	 	}else{
-	 		opts.ele.show();
-	 	}
-		trans("hide");
-		mask.removeClass("hidden");
-		dialog.removeClass("hidden");
-	 })()
+	  trans("hide");
 
 	 /**
 	  *
@@ -410,8 +416,8 @@
 
 	 window.onpopstate = function() {
 		hide();//监听后退
-	 }
-	 
+	}
+
 	 function hide(callback){
 	 	mask.removeClass("slide-win-mask-show").addClass("slide-win-mask-hide").show();
 		//解除禁止滑动
@@ -432,7 +438,13 @@
 	 this.hide = function(callback){
 	 	hide(callback);
 	 }
- }
+	 mask.appendTo(BODY);
+	 dialog.appendTo(BODY);
+  }
+
+  function FunnelLoading(){
+  	
+  }
 
  /**
   * base64编码

@@ -98,6 +98,18 @@ public class RemoteUserServiceImpl implements UserService {
 
 	}
 
+	// 更新应该都在sso系统里完成吧
+	@Override
+	public TbUser updatePart(TbUser tbUser) throws UserException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void modifyPassword(TbUser user, String oldpd, String newpw, TbUser operator,
+			HttpServletRequest request, HttpServletResponse response) throws UserException {
+		throw new UnsupportedOperationException();
+	}
+
 	@Override
 	public TbUser login(String key, String password, HttpServletRequest request,
 			HttpServletResponse response) throws UserException {

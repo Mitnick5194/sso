@@ -118,6 +118,51 @@ public class UserServiceImpl implements UserService, Worker {
 	}
 
 	@Override
+	public TbUser updatePart(TbUser tbUser) throws UserException {
+		if (null == tbUser)
+			throw new UserException("找不到用户");
+		if (tbUser.getId() == 0) {
+			throw new UserException("找不到用户");
+		}
+		userMapper.updateByPrimaryKeySelective(tbUser);
+		return tbUser;
+	}
+
+	@Override
+	public void modifyPassword(TbUser user, String oldpd, String newpw, TbUser operator,
+			HttpServletRequest request, HttpServletResponse response) throws UserException {
+		if (null == user || user.getId() == 0)
+			throw new UserException("找不到用户");
+		if (StringUtils.isEmpty(oldpd))
+			throw new UserException("原密码错误");
+		if (StringUtils.isEmpty(newpw))
+			throw new UserException("密码不允许为空");
+		if (operator.getId() != user.getId() && !RoleUtils.isAdmin(operator))
+			throw new UserException("无修改全选");
+		// user一般为redis保存的登录用户，redis不保存密码，所以需要到数据库查询出来再更新，而且这样的数据更准确
+		user = getUserById(user.getId());
+		if (null == user) {
+			// 难道被其他线程删除了，可能是管理员刚刚删除了吧
+			throw new UserException("用户不存在");
+		}
+		if (!user.contrastPassword(newpw = Toolkits.md5Password(oldpd)))
+			throw new UserException("原密码错误");
+		TbUser u = new TbUser();
+		u.setId(user.getId());
+		u.setPassword(newpw);
+		updatePart(u);
+		if (user.getId() != operator.getId())
+			logger.info(operator + "修改了" + user + "密码");
+		// 清楚登录信息
+		String token = getToken(request);
+		/*if (null == token)
+			return;*/// 应该不会发生这种是吧？控制器还能拿到token的user呢
+		RedisUser redisUser = getRedisUser();
+		redisUser.remove(token);
+		CookieUtils.setCookie(request, response, COOKIE_KEY, token, 0);
+	}
+
+	@Override
 	public TbUser login(String key, String password, HttpServletRequest request,
 			HttpServletResponse response) throws UserException {
 		if (null == key)
@@ -168,14 +213,7 @@ public class UserServiceImpl implements UserService, Worker {
 			// 已经退出了，或者客户端cookie过期了
 			return;
 		}
-		String key = null;
-		for (Cookie cookie : cookies) {
-			String name = cookie.getName();
-			if (UserService.COOKIE_KEY.equals(name)) {
-				key = cookie.getValue();
-				break;
-			}
-		}
+		String key = getToken(request);
 		if (null == key) {
 			// 已经退出了，或者客户端cookie过期了
 			return;
@@ -197,19 +235,26 @@ public class UserServiceImpl implements UserService, Worker {
 		if (null == cookies) {
 			return null;
 		}
-		String key = null;
-		for (Cookie cookie : cookies) {
-			String name = cookie.getName();
-			if (UserService.COOKIE_KEY.equals(name)) {
-				key = cookie.getValue();
-				break;
-			}
-		}
+		String key = getToken(request);
 		if (null == key) {
 			return null;
 		}
 		TbUser user = getUserFromRedis(key);
 		return user;
+	}
+
+	private String getToken(HttpServletRequest request) {
+		Cookie[] cookies = request.getCookies();
+		if (null == cookies) {
+			return null;
+		}
+		for (Cookie cookie : cookies) {
+			String name = cookie.getName();
+			if (UserService.COOKIE_KEY.equals(name)) {
+				return cookie.getValue();
+			}
+		}
+		return null;
 	}
 
 	@Override

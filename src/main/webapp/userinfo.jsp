@@ -53,7 +53,7 @@ body{margin:0;padding:0;height: 100%}
 .list-right{text-align: right;}
 .list-right div:nth-child(1){width:100%;border-right: 1px solid #888;padding-right: 10px;}
 .list-right>div{text-align: right;}
-.log-frame{width: 85%;min-height: 200px;word-wrap:break-word}
+.log-frame{width: 85%;min-height: 200px;word-wrap:break-word;display: none;}
 .log-nav{padding: 10px;background: #337ab7;display: flex;white-space: nowrap;color: #fff;}
 .log-nav div:nth-child(1){width: 100%}
 .system-info{padding: 10px;border: 1px solid #eee;font-size:12px;}
@@ -62,6 +62,20 @@ body{margin:0;padding:0;height: 100%}
 .col-green{color:green}
 .col-red{color: red}
 .logout-btn{width: calc(100% - 70px);width:-webkit-calc(100% - 70px) ; height: 40px;line-height: 40px;margin: 0 auto;text-align: center;border-radius: 5px;color:#fff;background: #337ab7;position: fixed;bottom: 10px;left: 35px;}
+.edit-info{display:none; padding-top: 10px; width: 80%;border-radius:5px;background: #fff;}
+.edit-info input{border: none;}
+.edit-info>.input-filed{display: flex;border-bottom: 1px solid #888;align-items:center;padding: 0 10px;}
+.input-filed>input{flex:1;height: 40px;line-height: 40px;padding: 0 5px;}
+.input-filed>span{width: 20px;height: 20px;line-height: 19px;background: #A9A9A9;text-align: center;border-radius: 50%;}
+.btn-filed{display: flex;text-align: center;}
+.disable-edit{color: #888;}
+.btn-filed>span{display: inline-block;width: 50%;padding: 10px 0;}
+.btn-filed>.btn-confirm{background: #337ab7;color: #fff;}
+.radio-filed{padding: 10px 20px;border-bottom: 1px solid #888;}
+.radio-filed>label{margin-right: 15px;}
+.radio-filed>label>input{margin-right: 5px;}
+.passwd-filed{padding: 0 10px;}
+.passwd-filed input{width: 100%;display: block;border: none;border-bottom: 1px solid #eee;height: 35px;line-height: 35px;}
 /**PC桌面*/
 @media screen and (min-width: 1100px){
 	/* 隐藏菜单 */
@@ -128,35 +142,81 @@ window.addEventListener("error" , function(e){
 		
 		<!-- 用户信息设置弹窗 -->
 		<div id="iUserSetting" class="user-setting-page" >
-			<section class="flex setting-item arrow_right">
+			<section class="flex setting-item  arrow_right">
 				<div>头像</div>
 				<img class="setting-item-right userHeader">
 			</section>
-			<section class="flex setting-item arrow_right">
+			<section data-type="name" class="flex setting-item">
 				<div>用户名</div>
-				<div class="setting-item-right name">无</div>
+				<div class="setting-item-right name disable-edit">未填写</div>
 			</section>
-			<section class="flex setting-item arrow_right userName">
+			<section data-type="nickname" class="flex setting-item arrow_right textEdit">
 				<div>昵称</div>
-				<div class="setting-item-right nickName">无</div>
+				<div class="setting-item-right nickname">未填写</div>
 			</section>
-			<section class="flex setting-item arrow_right">
+			<section data-type="phone" class="flex setting-item arrow_right textEdit">
+				<div>手机号码</div>
+				<div class="setting-item-right phone" >未填写</div>
+			</section>
+			<section data-type="email" class="flex setting-item arrow_right textEdit">
+				<div>电子邮箱</div>
+				<div class="setting-item-right email" >未填写</div>
+			</section>
+			<section data-type="sex" class="flex setting-item arrow_right textEdit">
 				<div>性别</div>
 				<div class="setting-item-right sex" >保密</div>
 			</section>
-			<section class="flex setting-item arrow_right">
+			<section data-type="address" class="flex setting-item arrow_right textEdit">
 				<div>地址</div>
-				<div class="setting-item-right address">不详</div>
+				<div class="setting-item-right address">未填写</div>
 			</section>
-			<section class="flex setting-item arrow_right">
+			<section data-type="synopsis" class="flex setting-item arrow_right textEdit">
 				<div>简介</div>
-				<div class="setting-item-right synopsis">无</div>
+				<div class="setting-item-right synopsis">未填写</div>
 			</section>
-			<section class="flex setting-item arrow_right">
+			<section data-type="updatePasswd" class="flex setting-item arrow_right textEdit">
 				<div>修改密码</div>
 			</section>
 			
 			<div class="logout-btn" id="iLogoutBtn">退出登录</div>
+		</div>
+		
+		<!-- 修改资料 -->
+		<div id="iEdit" class="edit-info">
+			<div class="input-filed">
+				<input type="text" name="content"  />
+				<span class="deleteBtn">x</span>
+			</div>
+			<div class="btn-filed">
+				<span class="cancelBtn btn-cancel">取消</span>
+				<span class="confirmBtn btn-confirm">修改</span>
+			</div>
+		</div>
+		
+		<!-- 修改性别 -->
+		<div id="iEditSex" class="edit-info">
+			<div class="radio-filed">
+				<!-- <label><input type="radio" name="sex"  />男</label>
+				<label><input type="radio" name="sex"  />女</label>
+				<label><input type="radio" name="sex"  />保密</label> -->
+			</div>
+			<div class="btn-filed">
+				<span class="cancelBtn btn-cancel">取消</span>
+				<span class="confirmBtn btn-confirm">修改</span>
+			</div>
+		</div>
+		
+		<!-- 修改密码 -->
+		<div id="iUpdatePasswd" class="edit-info">
+			<div class="passwd-filed">
+				<input type="password" name="oldPasswd" placeholder="原密码" />
+				<input type="password" name="newPasswd" placeholder="新密码" />
+				<input type="password" name="confirmPasswd" placeholder="确认密码" />
+			</div>
+			<div class="btn-filed">
+				<span class="cancelBtn btn-cancel">取消</span>
+				<span class="confirmBtn btn-confirm">修改</span>
+			</div>
 		</div>
 	<div class="log-frame" id="iLogFrame">
 		<div class="log-nav"><div>页面日志</div><div>info：0 warn：0 <span class="logErr error-font">error: 0</span></div></div>
@@ -257,6 +317,7 @@ window.addEventListener("error" , function(e){
 	<script>
 		var id = "${id}";
 		var serverId = "${serverId}";
+		
 	</script>
 	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/plugin/suspend-btn.js"></script>
 	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/global/suspend-btn-instance.js"></script>

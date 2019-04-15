@@ -2,6 +2,7 @@ package com.ajie.sso.controller.vo;
 
 import java.util.Date;
 
+import com.ajie.chilli.common.enums.SexEnum;
 import com.ajie.dao.pojo.TbUser;
 
 /**
@@ -29,13 +30,21 @@ public class UserVo {
 	private Date createtime;
 
 	private String header;
-	
+
 	public UserVo(TbUser user) {
 		this.id = user.getId();
 		this.name = user.getName();
 		this.nickname = user.getNickname();
 		this.synopsis = user.getSynopsis();
-		this.sex = user.getSex();
+		/** 坑爹的mysql，枚举类型是String */
+		String sex = user.getSex();
+		if (null == sex) {
+			sex = "0";
+		}
+		this.sex = SexEnum.find(Integer.valueOf(sex)).getName();
+		if (SexEnum.unknown.getName().equals(this.sex)) {
+			this.sex = "保密";
+		}
 		this.phone = user.getPhone();
 		this.email = user.getEmail();
 		this.createtime = user.getLastactive();

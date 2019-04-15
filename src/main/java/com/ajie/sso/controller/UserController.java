@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -23,12 +24,15 @@ import com.ajie.chilli.cache.redis.RedisClient;
 import com.ajie.chilli.cache.redis.RedisException;
 import com.ajie.chilli.common.ResponseResult;
 import com.ajie.chilli.common.VerifyImage;
+import com.ajie.chilli.common.enums.SexEnum;
 import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.common.StringUtils;
 import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.controller.vo.UserVo;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 
 /**
  * sso系统控制器
@@ -269,6 +273,83 @@ public class UserController {
 	public ResponseResult logout(HttpServletRequest request, HttpServletResponse response) {
 		userService.logout(request, response);
 		return ResponseResult.newResult(ResponseResult.CODE_SUC, "退出成功");
+	}
+
+	/**
+	 * 修改用户资料
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/updateuser")
+	public ResponseResult updateuser(HttpServletRequest request, HttpServletResponse response) {
+		TbUser user = userService.getUser(request);
+		if (null == user) {
+			return ResponseResult.newResult(ResponseResult.CODE_ERR, "会话过期，请重新登录");
+		}
+		String type = request.getParameter("type");
+		String value = request.getParameter("value");
+		TbUser u = new TbUser();
+		u.setId(user.getId());
+		if ("nickname".equals(type)) {
+			u.setNickname(value);
+		} else if ("synopsis".equals(type)) {
+			u.setSynopsis(value);
+		} else if ("sex".equals(type)) {
+			SexEnum sex = SexEnum.find(value);
+			value = String.valueOf(sex.getId());
+			u.setSex(value);
+		} else if ("phone".equals(type)) {
+			u.setPhone(value);
+		} else if ("email".equals(type)) {
+			u.setEmail(value);
+		} else if ("header".equals(type)) {
+			u.setHeader(value);
+		} else if ("password".equals(type)) {
+			String oldpw = value;
+			String newpw = request.getParameter("password");
+			try {
+				userService.modifyPassword(user, oldpw, newpw, user, request, response);
+				return ResponseResult.newResult(ResponseResult.CODE_SUC, "退出成功");
+			} catch (UserException e) {
+				return ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+			}
+		}
+		try {
+			userService.updatePart(u);
+		} catch (UserException e) {
+			logger.error("修改用户资料错误", e);
+			return ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+		}
+		return ResponseResult.newResult(ResponseResult.CODE_SUC, "退出成功");
+	}
+
+	/**
+	 * 获取性别枚举
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getsexenum")
+	public ResponseResult getsexenum(HttpServletRequest request, HttpServletResponse response) {
+		JSONArray arr = new JSONArray();
+		JSONObject obj = new JSONObject();
+		obj.put("id", SexEnum.male.getId());
+		obj.put("value", SexEnum.male.getName());
+		arr.add(obj);
+		obj = new JSONObject();
+		obj.put("id", SexEnum.female.getId());
+		obj.put("value", SexEnum.female.getName());
+		arr.add(obj);
+		obj = new JSONObject();
+		obj.put("id", SexEnum.unknown.getId());
+		obj.put("value", "保密");
+		arr.add(obj);
+		return ResponseResult.newResult(ResponseResult.CODE_SUC, arr);
 	}
 
 	/**

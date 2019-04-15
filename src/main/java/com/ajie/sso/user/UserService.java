@@ -29,7 +29,7 @@ public interface UserService {
 	/** 请求中token参数的key */
 	public final static String REQUEST_TOKEN_KEY = "onnssskey";
 
-	/** cookie(redis登录记录过期时间，cookie不设过期时间，不然不好控制刷新cookie)过期时间,单位秒 */
+	/** 登录过期时间,单位秒 */
 	public final static int COOKIE_EXPIRE = 30 * 60;
 
 	/** 远程系统间调用识别的键，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
@@ -66,13 +66,45 @@ public interface UserService {
 			HttpServletResponse response) throws UserException;
 
 	/**
-	 * 更新用户
+	 * 更新用户，慎用，需要传入完整的tbUser信息，否则留空的也会当做空值保存
+	 * 
+	 * @param tbUser
+	 * @return
+	 * @throws UserException
+	 * 
+	 * @Deprecated 使用updatePart
+	 */
+	@Deprecated
+	TbUser update(TbUser tbUser) throws UserException;
+
+	/**
+	 * 更新用户，只会更新传入值的字段，不能用于更新密码
 	 * 
 	 * @param tbUser
 	 * @return
 	 * @throws UserException
 	 */
-	TbUser update(TbUser tbUser) throws UserException;
+	TbUser updatePart(TbUser tbUser) throws UserException;
+
+	/**
+	 * 修改密码
+	 * 
+	 * @param user
+	 *            需要修改密码的用户，需要的是完整的用户，而不是只包含部分字段的用户
+	 * @param oldpw
+	 *            原密码
+	 * @param newpw
+	 *            新密码
+	 * @param operator
+	 *            操作者，管理员可以修改比人的密码
+	 * @param request
+	 *            用作获取cookie
+	 * @param respone
+	 *            用作清楚登录缓存
+	 * @throws UserException
+	 */
+	void modifyPassword(TbUser user, String oldpw, String newpw, TbUser operator,
+			HttpServletRequest request, HttpServletResponse response) throws UserException;
 
 	/**
 	 * 登录

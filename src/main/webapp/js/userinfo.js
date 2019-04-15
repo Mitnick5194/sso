@@ -3,6 +3,8 @@
 	var userSetting = $("#iUserSetting");
 	var userSettingWin = userSetting.getSlideWindow({title: "我的"});
 	var userData = null;
+	 var editDv = $("#iEdit");
+	var edit =editDv.getWindow();
 	getuser(id,function(data){
 		userData = data;
 		userinfo.find(".userName").html(data.nickname || data.name);
@@ -30,12 +32,12 @@
 		})
 	}
 	var tempstr = $("#iBlogTemp").html();
-	loadblogs(function(data){
+	/*loadblogs(function(data){
 		var blogs = data ||[];
 		var sb = handleBlogTemp(blogs);
 		$("#iBlogs").html(sb.join(""));
 		getBlogCount();
-	});
+	});*/
 	
 	function handleBlogTemp(blogs){
 		var sb = [];
@@ -197,6 +199,7 @@
 	
 	var settingLoad = false;//是否已经打开过，打开过就没有必要再设置信息了
 	$("#iSettingBtn").on("click",function(){
+		console.log(userData);
 		if(settingLoad){
 			userSettingWin.show();
 		}
@@ -206,7 +209,9 @@
 		}
 		var header = userData.header;
 		var name = userData.name;
-		var nickName = userData.nickName;
+		var nickname = userData.nickname;
+		var phone = userData.phone;
+		var email = userData.email;
 		var sex = userData.sex;
 		var address = userData.address;
 		var synopsis = userData.synopsis;
@@ -216,8 +221,8 @@
 		if(name){
 			userSetting.find(".name").html(name);
 		}
-		if(nickName){
-			userSetting.find(".nickName").html(nickName);
+		if(nickname){
+			userSetting.find(".nickname").html(nickname);
 		}
 		if(sex){
 			userSetting.find(".sex").html(sex);
@@ -227,6 +232,12 @@
 		}
 		if(synopsis){
 			userSetting.find(".synopsis").html(synopsis);
+		}
+		if(phone){
+			userSetting.find(".phone").html(phone);
+		}
+		if(email){
+			userSetting.find(".email").html(email);
 		}
 		settingLoad = true;
 		userSettingWin.show();
@@ -245,6 +256,166 @@
 		form.find("input").eq(0).val(id);
 		form.submit();
 	})
+	
+	var updatePasswd = $("#iUpdatePasswd");
+	var updatePasswdWin = updatePasswd.getWindow();
+	var editSex = $("#iEditSex");
+	var editSexWin = editSex.getWindow();
+	var obj = {};//提交更新数据
+	//修改资料
+	//点击的节点，在修改后更新页面内容
+	var node = null;
+	userSetting.on("click",".textEdit",function(){
+		var _this = $(this);
+		var type = _this.attr("data-type");
+		if(!type){
+			return;
+		}
+		node = _this;
+		obj.type = type;
+		if(type == "sex"){
+			fnEditSex(obj);
+		}else if(type == "updatePasswd"){
+			fnUpdatePasswd(obj);
+		}else{
+			fnEditInfo(obj);
+		}
+		
+	});
+	
+	function fnEditInfo(obj){
+		var value = userData[obj.type];
+		var input = editDv.find("input[name=content]");
+		input.val(value); 
+		edit.show(function(){
+			//要在show之后
+			input.focus();
+		});
+	}
+	
+	var cacheSexEnum = null;//枚举性别
+	var sexTemp = "<label><input type='radio' name='sex' checked='[checked]' value=[id] />[value]</label>";
+	function fnEditSex(obj){
+		if(!cacheSexEnum){
+			var loading = $.showloading("正在加载");
+			$.ajax({
+				type: 'post',
+				url: 'getsexenum.do',
+				success: function(data) {
+					console.log(data);
+					if(data.code != 200){
+						$.showToast(data.msg);
+						return;
+					}
+					var sb = [];
+					var _data = data.data;
+					for(let i=0;i<_data.length;i++){
+						var _sex = _data[i];
+						if(_sex.value == "男"){
+							_sex.checked = "checked";
+						}else{
+							_sex.checked = "false";
+						}
+						sb.push(sexTemp.temp(_sex));
+					}
+					editSex.find(".radio-filed").html(sb.join(""));
+				},
+				fail: function(e) {
+				},
+				complete: function(){
+					loading.hide();
+				}
+			})
+		}
+		editSexWin.show();
+	}
+	
+	function fnUpdatePasswd(){
+		updatePasswdWin.show();
+	}
+	
+	//编辑
+	editDv.on("click",".deleteBtn",function(){
+		var input = editDv.find("input[name=content]");
+		input.val("");
+		input.focus();
+	}).on("click",".cancelBtn",function(){
+		edit.hide(function(){
+			var input = editDv.find("input[name=content]").val("");
+		});
+	}).on("click",".confirmBtn",function(){
+		var value = editDv.find("input[name=content]").val();
+		obj.value = value;
+		$.showloading("正在修改");
+		submitUpdate(obj,function(){
+			$.showToast("修改成功！",function(){
+				edit.hide(function(){
+					if(value){
+						node.find(".setting-item-right").html(value)
+					}else{
+						if(node.attr("data-type" == "sex")){
+							node.find(".setting-item-right").html("保密");
+						}else{
+							node.find(".setting-item-right").html("未填写");
+						}
+					}
+					editDv.find("input[name=content]").val("");
+				})
+			})
+		})
+	})
+	
+	updatePasswd.on("click",".cancelBtn",function(){
+		updatePasswd.find("input").val("");
+		updatePasswdWin.hide();
+	}).on("click",".confirmBtn",function(){
+		var old = updatePasswd.find("input[name=oldPasswd]").val();
+		var newPasswd = updatePasswd.find("input[name=newPasswd]").val();
+		var confirm = updatePasswd.find("input[name=confirmPasswd]").val();
+		if(!old){
+			$.showToast("原密码错误");
+			return;
+		}
+		if(!newPasswd){
+			$.showToast("密码不能为空");
+			return;
+		}
+		if(!confirm || confirm != newPasswd ){
+			$.showToast("两次密码不一致");
+			return;
+		}
+		obj.type = "password";
+		obj.value = old;
+		obj.password = newPasswd;
+		$.showloading("正在修改");
+		submitUpdate(obj,function(){
+			$.showToast("修改成功！",function(){
+				updatePasswdWin.hide(function(){
+					window.reload();//刷新页面，重新登录
+				})
+			})
+		})
+	})
+	
+	function submitUpdate(data,callback){
+		$.ajax({
+			type: 'post',
+			url: 'updateuser.do',
+			data:obj,
+			success: function(data) {
+				if(data.code != 200){
+					$.showToast(data.msg);
+					return;
+				}
+				typeof callback === "function" && callback();
+			},
+			fail: function(e) {
+			},
+			complete: function(){
+			}
+		})
+	}
+	
 	
 	//退出登录
 	$("#iLogoutBtn").on("click",function(){

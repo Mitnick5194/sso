@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.Arrays;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ajie.chilli.cache.redis.RedisClient;
@@ -31,6 +31,7 @@ import com.ajie.dao.pojo.TbUser;
 import com.ajie.sso.controller.vo.UserVo;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
+import com.ajie.web.XssDefenseRequest;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
@@ -102,7 +103,13 @@ public class UserController {
 	 */
 	@RequestMapping("/userinfo")
 	public String userinfo(HttpServletRequest request, HttpServletResponse response) {
+		TbUser user = userService.getUser(request);
 		String id = request.getParameter("id");
+		if (null == user) {
+			request.setAttribute("isSelf", false);
+		} else {
+			request.setAttribute("isSelf", StringUtils.eq(id, String.valueOf(user.getId())));
+		}
 		request.setAttribute("id", id);
 		return "userinfo";
 	}
@@ -150,7 +157,7 @@ public class UserController {
 			if (isRemote(request)) {
 				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
 			} else {
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user, user));
 			}
 		} catch (UserException e) {
 			logger.error("用户注册失败", e);
@@ -195,24 +202,29 @@ public class UserController {
 	}
 
 	@ResponseBody
-	@RequestMapping("/dologin")
+	@RequestMapping(value="/dologin",method = RequestMethod.POST)
 	public Object dologin(HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
 		String key = request.getParameter("key");
 		String password = request.getParameter("password");
 		String callback = request.getParameter("callback");
+		String method = request.getMethod();
+		System.out.println(method);
 		ResponseResult result = null;
 		try {
 			TbUser user = userService.login(key, password, request, response);
 			if (isRemote(request)) {
 				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
 			} else {
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user, user));
 			}
 		} catch (UserException e) {
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
 		}
 		if (null == callback) {
+			response.addHeader("Access-Control-Allow-Origin", "http://localhost:8080");
+			response.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
+			response.addHeader("Access-Control-Allow-Headers", "X-Custom-Header");
 			return result;
 		}
 		// 不知原因，使用MappingJacksonValue转换的结果不是jsonp格式，可能是fastjson的问题，以后再深究
@@ -230,6 +242,7 @@ public class UserController {
 	@ResponseBody
 	@RequestMapping("/getuserbyid")
 	public ResponseResult getuserbyid(HttpServletRequest request, HttpServletResponse response) {
+		TbUser operator = userService.getUser(request);
 		int id = Toolkits.toInt(request.getParameter("id"), 0);
 		ResponseResult result = null;
 		TbUser user = userService.getUserById(id);
@@ -239,7 +252,7 @@ public class UserController {
 			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null,/*user.getToken()*/
 					user);
 		} else {
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user));
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user, operator));
 		}
 		return result;
 	}
@@ -289,6 +302,7 @@ public class UserController {
 		if (null == user) {
 			return ResponseResult.newResult(ResponseResult.CODE_ERR, "会话过期，请重新登录");
 		}
+		request = XssDefenseRequest.toXssDefenseRequest(request);
 		String type = request.getParameter("type");
 		String value = request.getParameter("value");
 		TbUser u = new TbUser();
@@ -298,7 +312,8 @@ public class UserController {
 		} else if ("synopsis".equals(type)) {
 			u.setSynopsis(value);
 		} else if ("sex".equals(type)) {
-			SexEnum sex = SexEnum.find(value);
+			int sexId = Toolkits.toInt(value, 0);
+			SexEnum sex = SexEnum.find(sexId);
 			value = String.valueOf(sex.getId());
 			u.setSex(value);
 		} else if ("phone".equals(type)) {
@@ -365,7 +380,7 @@ public class UserController {
 		PrintWriter writer = response.getWriter();
 		String key = request.getParameter("key");
 		if (null != key) {
-			// 删除就的key
+			// 删除旧的key
 			try {
 				redisClient.del(VerifyImage.CACHE_PREFIX + key);
 			} catch (RedisException e) {

@@ -20,6 +20,7 @@ body{margin:0;padding:0;height: 100%}
 .header-img>img{display: inline-block; width: 70px;height: 70px;border-radius: 50%}
 .header-info{width: 100%; text-align: center;color:#fff;}
 .blog-info{padding: 5px 0;}
+.synopsis{ white-space: nowrap;text-overflow: ellipsis;overflow: hidden;text-align: center;}
 .setting{top: 0;right: 0;width: 40px;height: 40px;position: absolute;background: url('./images/set.jpg') no-repeat;background-size: 85%; }
 .main{margin-top: 20px;width: 100%;overflow: hidden;}
 .nav{display: flex;}
@@ -30,17 +31,17 @@ body{margin:0;padding:0;height: 100%}
 .article>div{width: 100%;padding: 10px;}
 .blog{width: 100%; height: 300px;display: flex;align-items:center; justify-content: center;font-size: 18px;}
 .align-c{text-align: center;}
-.no-data{font-size: 16px; color: #888;}
-.user-setting-page{padding: 0 5px;display: none;}
+.no-data{font-size: 16px; color: #888;height: 200px;}
+.user-setting-page{padding: 0 5px;display: none;margin-bottom: 60px;}
 .op-nav{padding: 10px 15px;border-bottom: 1px solid #888;text-align: center;}
 .op-nav>div{width: 50%; font-size: 18px;}
 .op-nav div:nth-child(2){color: #337ab7;border-left:1px solid #888;}
 .setting-item{padding: 15px; border-bottom: 1px solid #eee;align-items: center;}
 .setting-item>img{width: 30px;height: 30px;border-radius: 50%;}
-.setting-item div:nth-child(1){width: 100%;flex: 1}
+.setting-item div:nth-child(1){width: 100%;flex: 1;white-space: nowrap;margin-right: 10px;}
 .arrow_right{background: url('${pageContext.request.contextPath }/${serverId }/images/arrow_right.jpg') no-repeat center right;}
 .arrow_right{background-size: 25px;}
-.setting-item-right{margin-right: 15px;}
+.setting-item-right{margin-right: 15px;    text-overflow: ellipsis;overflow: hidden;white-space: nowrap;}
 /* 博客内容 */
 .blogs>section{border-bottom: 1px solid #eee;padding: 20px 15px;background: #fff;}
 .blogs>section.darkModeActive{border-bottom: 1px solid #000;}
@@ -66,7 +67,8 @@ body{margin:0;padding:0;height: 100%}
 .edit-info input{border: none;}
 .edit-info>.input-filed{display: flex;border-bottom: 1px solid #888;align-items:center;padding: 0 10px;}
 .input-filed>input{flex:1;height: 40px;line-height: 40px;padding: 0 5px;}
-.input-filed>span{width: 20px;height: 20px;line-height: 19px;background: #A9A9A9;text-align: center;border-radius: 50%;}
+.input-filed>.deleteBtn{width: 40px;height: 40px;line-height: 40px;text-align: center}
+.input-filed>.deleteBtn>span{width: 20px;height: 20px;line-height: 18px;border-radius: 50%;background:#A9A9A9;display: inline-block }
 .btn-filed{display: flex;text-align: center;}
 .disable-edit{color: #888;}
 .btn-filed>span{display: inline-block;width: 50%;padding: 10px 0;}
@@ -114,14 +116,24 @@ window.addEventListener("error" , function(e){
 					<span> 转载  0 |</span>
 					<span>收藏 0 </span>
 				</div>
-				<div class="setting" id="iSettingBtn"></div>
+				<div class="synopsis"></div>
+				<c:if test="${isSelf }">
+					<div class="setting" id="iSettingBtn"></div>
+				</c:if>
 			</div>
 			
 			<div class="main">
 				<div class="nav" id="iNav">
-					<div  data-idx="0" class="active">博文</div>
-					<div  data-idx="1" >分类</div>
-					<div data-idx="2">草稿箱</div>
+					<div  data-idx="0" class="active navItem">博文</div>
+					<div  data-idx="1" class="navItem">分类</div>
+					<c:choose>
+						<c:when test="${isSelf }">
+							<div data-idx="2" class="navItem">草稿箱</div>
+						</c:when>
+						<c:otherwise>
+							<div data-idx="2" class="navItem">个人资料</div>
+						</c:otherwise>
+					</c:choose>
 				</div>
 				<div id="iArticle" class="article">
 					<div class="blogs" id="iBlogs">
@@ -129,8 +141,39 @@ window.addEventListener("error" , function(e){
 					<div class="blogs sort">
 						<div class="align-c no-data">没有任何分类</div>
 					</div>
-					<div  class="blogs" id="iDraft">
-					</div>
+					<c:choose>
+						<c:when test="${isSelf }">
+							<div  class="blogs" id="iDraft"></div>
+						</c:when>
+						<c:otherwise>
+							<div class="blogs" id="iTheInfo">
+								<section data-type="nickname" class="flex setting-item arrow_right textEdit">
+									<div>昵称</div>
+									<div class="setting-item-right nickname">未填写</div>
+								</section>
+								<section data-type="phone" class="flex setting-item arrow_right textEdit">
+									<div>手机号码</div>
+									<div class="setting-item-right phone" >未填写</div>
+								</section>
+								<section data-type="email" class="flex setting-item arrow_right textEdit">
+									<div>电子邮箱</div>
+									<div class="setting-item-right email" >未填写</div>
+								</section>
+								<section data-type="sex" class="flex setting-item arrow_right textEdit">
+									<div>性别</div>
+									<div class="setting-item-right sex" >保密</div>
+								</section>
+								<section data-type="address" class="flex setting-item arrow_right textEdit">
+									<div>地址</div>
+									<div class="setting-item-right address">未填写</div>
+								</section>
+								<section data-type="synopsis" class="flex setting-item arrow_right textEdit">
+									<div>简介</div>
+									<div class="setting-item-right synopsis">未填写</div>
+								</section>
+							</div>
+						</c:otherwise>
+					</c:choose>
 				</div>
 			</div>
 		</div>
@@ -177,7 +220,7 @@ window.addEventListener("error" , function(e){
 			<section data-type="updatePasswd" class="flex setting-item arrow_right textEdit">
 				<div>修改密码</div>
 			</section>
-			
+
 			<div class="logout-btn" id="iLogoutBtn">退出登录</div>
 		</div>
 		
@@ -185,7 +228,7 @@ window.addEventListener("error" , function(e){
 		<div id="iEdit" class="edit-info">
 			<div class="input-filed">
 				<input type="text" name="content"  />
-				<span class="deleteBtn">x</span>
+				<div class="deleteBtn"><span>x</span></div>
 			</div>
 			<div class="btn-filed">
 				<span class="cancelBtn btn-cancel">取消</span>
@@ -226,7 +269,7 @@ window.addEventListener("error" , function(e){
 	
 	<jsp:include page="/footer.jsp"></jsp:include>
 	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
-	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId}/common/common.js"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId}/common/common.js?t=2019"></script>
 	<script type="text/javascript">
 		//日志弹窗
 		var  logFrame = $("#iLogFrame").getWindow();
@@ -321,5 +364,6 @@ window.addEventListener("error" , function(e){
 	</script>
 	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/plugin/suspend-btn.js"></script>
 	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/global/suspend-btn-instance.js"></script>
+	<script src="${ pageContext.request.contextPath }/${serverId }/plugin/Slider.js?t=2019"></script>
 	<script src="js/userinfo.js"></script>
 </html>

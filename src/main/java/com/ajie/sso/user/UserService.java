@@ -50,11 +50,13 @@ public interface UserService {
 	public final static KVpair STATE_STOP = KVpair.valueOf("停用", 1 << 1);
 	/** 状态 --禁止登录 */
 	public final static KVpair STATE_BANLOGIN = KVpair.valueOf("禁止登录", 1 << 2);
+	/** 状态 --锁定 */
+	public final static KVpair STATE_LOCK = KVpair.valueOf("锁定", 1 << 3);
 
 	/** 登录状态 -- 在线 */
-	public final static KVpair LOGIN_STATE_ONLINE = KVpair.valueOf("在线", 1 << 3);
+	public final static KVpair LOGIN_STATE_ONLINE = KVpair.valueOf("在线", 1 << 20);
 	/** 登录状态 -- 离线 */
-	public final static KVpair LOGIN_STATE_OUTLINE = KVpair.valueOf("离线", 1 << 4);
+	public final static KVpair LOGIN_STATE_OUTLINE = KVpair.valueOf("离线", 1 << 21);
 
 	/**
 	 * 注册
@@ -193,7 +195,7 @@ public interface UserService {
 	 * 
 	 * @return
 	 */
-	public List<Role> getRoles();
+	List<Role> getRoles();
 
 	/**
 	 * 检测user是否有权限访问url
@@ -201,5 +203,15 @@ public interface UserService {
 	 * @param url
 	 * @return
 	 */
-	public boolean checkRole(TbUser user, String url);
+	boolean checkRole(TbUser user, String url);
+
+	/**
+	 * 锁定用户
+	 * 
+	 * @param user
+	 * @return
+	 * @throws UserException
+	 */
+	boolean lock(TbUser user) throws UserException;
+
 }

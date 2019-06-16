@@ -31,7 +31,13 @@ public class UserVo {
 
 	private String header;
 
-	public UserVo(TbUser user) {
+	/**
+	 * 如果operator和user不是同一个用户或者不是管理员，则不赋值敏感信息
+	 * 
+	 * @param user
+	 * @param operator
+	 */
+	public UserVo(TbUser user, TbUser operator) {
 		this.id = user.getId();
 		this.name = user.getName();
 		this.nickname = user.getNickname();
@@ -45,8 +51,10 @@ public class UserVo {
 		if (SexEnum.unknown.getName().equals(this.sex)) {
 			this.sex = "保密";
 		}
-		this.phone = user.getPhone();
-		this.email = user.getEmail();
+		if (null != operator && user.getId() == operator.getId()) {
+			this.phone = user.getPhone();
+			this.email = user.getEmail();
+		}
 		this.createtime = user.getLastactive();
 		this.header = user.getHeader();
 	}

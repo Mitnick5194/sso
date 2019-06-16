@@ -2,13 +2,43 @@
 	var userinfo = $("#iUserInfo");
 	var userSetting = $("#iUserSetting");
 	var userSettingWin = userSetting.getSlideWindow({title: "我的"});
-	var userData = null;
 	 var editDv = $("#iEdit");
 	var edit =editDv.getWindow();
+	
+	var slider = SliderFactory.createSlider(iArticle,iArticle,{
+		autoCtrl: true,
+		pageCount: 3,
+		minDistX: 5
+	}).success(function(ret,wrap,pageInfo){
+		var idx = pageInfo.getIdx() || 0;
+		$("#iNav").find(".navItem").removeClass("active");
+		$("#iNav").find(".navItem").eq(Math.abs(idx)).addClass("active");
+		handleTogglePage(Math.abs(idx));
+	});
+	
+	/**缓存aj数据*/
+	var cache = (function(){
+		var obj = {};
+		return {
+			get: function(key){
+				return obj[key];
+			},
+			set:function(key,value){
+				obj[key] = value;
+			}
+		}
+	})()
+	
 	getuser(id,function(data){
-		userData = data;
+		cache.set("user",data);
 		userinfo.find(".userName").html(data.nickname || data.name);
 		userinfo.find(".userHeader").attr("src",data.header);
+		userinfo.find(".synopsis").html("简介："+data.synopsis);
+		var obj = {};
+		$.extend(obj,data);
+		obj.phone = "未公开";
+		obj.email = "为公开";
+		fillUserInfo(obj,$("#iTheInfo"));
 	})
 	function getuser(id,callback){
 		$.ajax({
@@ -32,12 +62,12 @@
 		})
 	}
 	var tempstr = $("#iBlogTemp").html();
-	/*loadblogs(function(data){
+	loadblogs(function(data){
 		var blogs = data ||[];
 		var sb = handleBlogTemp(blogs);
 		$("#iBlogs").html(sb.join(""));
 		getBlogCount();
-	});*/
+	});
 	
 	function handleBlogTemp(blogs){
 		var sb = [];
@@ -94,7 +124,7 @@
 				}
 				typeof callback === "function" && callback(data.data || {});
 			},
-			fail: function(e) {
+			error: function(e) {
 				$.showToast(e)
 			},
 			complete: function(){
@@ -154,6 +184,16 @@
 		var idx = nav.attr("data-idx");
 		var dis = idx * (100 / 3);
 		$("#iArticle").css("transform","translateX(-"+dis+"%)");
+		handleTogglePage(idx);
+		slider.setPageIdx(-idx,-1);
+	}
+	
+	/**
+	 * 切换导航条动作完成后加载数据
+	 * 
+	 * @param idx
+	 */
+	function handleTogglePage(idx){
 		var items = $("#iArticle").find(".blogs");
 		for(let i = 0;i<items.length;i++){
 			if(i == idx){
@@ -162,16 +202,6 @@
 				items.eq(i).css("height","0");
 			}
 		}
-		handleTogglePage(idx);
-	}
-	
-	var cacheDrafts;// 草稿箱博客
-	/**
-	 * 切换导航条动作完成后加载数据
-	 * 
-	 * @param idx
-	 */
-	function handleTogglePage(idx){
 		if(idx == 0){
 			return;
 		}
@@ -179,17 +209,21 @@
 			// 加载分类 TODO
 		}
 		if(idx == 2){
-			if(cacheDrafts){
+			if(cache.get("draff")){
 				return;
 			}
 			// 草稿箱
-			loadblogs("draft",function(data){
-				var blogs = data ||[];
-				cacheDrafts = blogs;
-				var sb = handleBlogTemp(blogs);
-				$("#iDraft").html(sb.join(""));
-			})
+			if(window.iDraft && !window.iTheInfo){
+				loadblogs("draft",function(data){
+					var blogs = data ||[];
+					cache.set("draff",blogs);
+					var sb = handleBlogTemp(blogs);
+					$("#iDraft").html(sb.join(""));
+				})
+			}
+			
 		}
+		
 	}
 	
 	$("#iBlogs").on("click" , ".item" , function(){
@@ -199,49 +233,49 @@
 	
 	var settingLoad = false;//是否已经打开过，打开过就没有必要再设置信息了
 	$("#iSettingBtn").on("click",function(){
-		console.log(userData);
-		if(settingLoad){
-			userSettingWin.show();
-		}
-		if(!userData){
+		if(cache.get("setting")){
 			userSettingWin.show();
 			return;
 		}
-		var header = userData.header;
-		var name = userData.name;
-		var nickname = userData.nickname;
-		var phone = userData.phone;
-		var email = userData.email;
-		var sex = userData.sex;
-		var address = userData.address;
-		var synopsis = userData.synopsis;
-		if(header){
-			userSetting.find(".userHeader").attr("src",header);
-		}
-		if(name){
-			userSetting.find(".name").html(name);
-		}
-		if(nickname){
-			userSetting.find(".nickname").html(nickname);
-		}
-		if(sex){
-			userSetting.find(".sex").html(sex);
-		}
-		if(address){
-			userSetting.find(".address").html(address);
-		}
-		if(synopsis){
-			userSetting.find(".synopsis").html(synopsis);
-		}
-		if(phone){
-			userSetting.find(".phone").html(phone);
-		}
-		if(email){
-			userSetting.find(".email").html(email);
-		}
+		fillUserInfo(cache.get("user"),userSetting)
 		settingLoad = true;
 		userSettingWin.show();
 	})
+	
+	function fillUserInfo(obj,page){
+		var header = obj.header;
+		var name = obj.name;
+		var nickname = obj.nickname;
+		var phone = obj.phone;
+		var email = obj.email;
+		var sex = obj.sex;
+		var address = obj.address;
+		var synopsis = obj.synopsis;
+		if(header){
+			page.find(".userHeader").attr("src",header);
+		}
+		if(name){
+			page.find(".name").html(name);
+		}
+		if(nickname){
+			page.find(".nickname").html(nickname);
+		}
+		if(sex){
+			page.find(".sex").html(sex);
+		}
+		if(address){
+			page.find(".address").html(address);
+		}
+		if(synopsis){
+			page.find(".synopsis").html(synopsis);
+		}
+		if(phone){
+			page.find(".phone").html(phone);
+		}
+		if(email){
+			page.find(".email").html(email);
+		}
+	}
 	
 	$("#iBlogs").on("click","section",function(){
 		var id = $(this).attr("data-id");
@@ -284,7 +318,8 @@
 	});
 	
 	function fnEditInfo(obj){
-		var value = userData[obj.type];
+		var data = cache.get("user");
+		var value = data[obj.type];
 		var input = editDv.find("input[name=content]");
 		input.val(value); 
 		edit.show(function(){
@@ -293,32 +328,31 @@
 		});
 	}
 	
-	var cacheSexEnum = null;//枚举性别
-	var sexTemp = "<label><input type='radio' name='sex' checked='[checked]' value=[id] />[value]</label>";
+	var sexTemp = "<label><input type='radio' name='sex' [checked] value=[id] />[value]</label>";
 	function fnEditSex(obj){
-		if(!cacheSexEnum){
+		if(!cache.get("sex")){
 			var loading = $.showloading("正在加载");
 			$.ajax({
 				type: 'post',
 				url: 'getsexenum.do',
 				success: function(data) {
-					console.log(data);
 					if(data.code != 200){
 						$.showToast(data.msg);
 						return;
 					}
 					var sb = [];
 					var _data = data.data;
+					cache.set("sex",_data) ;
+					var data = cache.get("user");
 					for(let i=0;i<_data.length;i++){
 						var _sex = _data[i];
-						if(_sex.value == "男"){
+						if(_sex.value == data.sex){
 							_sex.checked = "checked";
-						}else{
-							_sex.checked = "false";
 						}
 						sb.push(sexTemp.temp(_sex));
 					}
 					editSex.find(".radio-filed").html(sb.join(""));
+					hasLoadSexEnum = true;
 				},
 				fail: function(e) {
 				},
@@ -346,22 +380,35 @@
 	}).on("click",".confirmBtn",function(){
 		var value = editDv.find("input[name=content]").val();
 		obj.value = value;
-		$.showloading("正在修改");
+		var type = obj.type;
+		if(type == "email"){
+			if(!$.isMail(value)){
+				$.showToast("邮箱格式错误");
+				return;
+			}
+		}else if(type == "phone"){
+			if(!$.isMobile(value)){
+				$.showToast("手机号码格式错误");
+				return;
+			}
+		}else if(type == "nickname"){
+			if($.hasSymbol(value)){
+				$.showToast("用户名不能包含特殊字符");
+				return;
+			}
+		}
 		submitUpdate(obj,function(){
-			$.showToast("修改成功！",function(){
-				edit.hide(function(){
-					if(value){
-						node.find(".setting-item-right").html(value)
-					}else{
-						if(node.attr("data-type" == "sex")){
-							node.find(".setting-item-right").html("保密");
-						}else{
-							node.find(".setting-item-right").html("未填写");
-						}
-					}
-					editDv.find("input[name=content]").val("");
-				})
-			})
+			edit.hide();
+		})
+	})
+	
+	editSex.on("click",".cancelBtn",function(){
+		editSexWin.hide();
+	}).on("click",".confirmBtn",function(){
+		var val = editSex.find("input[type=radio]:checked").val();
+		obj.value = val;
+		submitUpdate(obj,function(){
+			editSexWin.hide();
 		})
 	})
 	
@@ -387,17 +434,15 @@
 		obj.type = "password";
 		obj.value = old;
 		obj.password = newPasswd;
-		$.showloading("正在修改");
 		submitUpdate(obj,function(){
-			$.showToast("修改成功！",function(){
-				updatePasswdWin.hide(function(){
-					window.reload();//刷新页面，重新登录
-				})
+			updatePasswdWin.hide(function(){
+				location.reload();//刷新页面，重新登录
 			})
 		})
 	})
 	
 	function submitUpdate(data,callback){
+		$.showloading("正在修改");
 		$.ajax({
 			type: 'post',
 			url: 'updateuser.do',
@@ -407,6 +452,32 @@
 					$.showToast(data.msg);
 					return;
 				}
+				var value = obj.value;
+				var type = obj.type;
+				cache.get("user")[type] = value;
+				if(value){
+					if(node.attr("data-type") == "sex"){
+						var _val = "";
+						var sexs = cache.get("sex");
+						for(let i=0;i<sexs.length;i++){
+							var sex = sexs[i];
+							if(sex.id == value){
+								_val = sex.value;
+								break;
+							}
+						}
+						node.find(".setting-item-right").html(_val);
+					}else{
+						node.find(".setting-item-right").html(value)
+					}
+				}else{
+					if(node.attr("data-type") == "sex"){
+						node.find(".setting-item-right").html("保密");
+					}else{
+						node.find(".setting-item-right").html("未填写");
+					}
+				}
+				$.showToast("修改成功");
 				typeof callback === "function" && callback();
 			},
 			fail: function(e) {

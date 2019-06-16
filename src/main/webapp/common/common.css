@@ -1,24 +1,26 @@
-/*
-	z-index说明：
-		侧栏滑出窗体[1000-1499]
-		弹窗在[1500-1999]
-		悬浮菜单也算弹窗，所以要在1500-1999
-		loading:[2000-2500];
-		success:[2500-3000];
-		toast:[3000-3500];
-		共用的取高着，如loading和toast共用show_msg-dialog,则去toast的范围
-
-*/
-
+/**
+ * z-index说明：
+ * 	侧栏滑出窗体[1000-1499]
+ * 	弹窗在[1500-1999]
+ * 	悬浮菜单也算弹窗，所以要在1500-1999
+ * 	loading:[2000-2500];
+ * 	success:[2500-3000];
+ * 	toast:[3000-3500];
+ * 	共用的取高着，如loading和toast共用show_msg-dialog,则取toast的范围
+ *
+ * 命名规范：
+ * 	类型-xxxx 
+ *
+ */
+		
 /*禁止弹窗滚动时后面的页面也滚动*/
 .disable-scroll{overflow: hidden}
 /*弹窗相关*/
 .window-plugin-background{z-index: 1500; position: fixed;top: 0;left: 0;bottom: 0;right: 0;width: 100%;height: 100%;background: #000000;opacity: .3;filter: alpha(opacity=30); /*IE浏览器*/;display: none;}
 .modal-background-show{animation: modal_background_show .2s  ease-in-out;}
 
-.window-plugin-dialog{position: fixed;z-index: 1501;display: none;background-color: #ffffff;}
+.window-plugin-dialog{position: fixed;z-index: 1501;display: none;background-color: #ffffff;overflow: scroll;}
 .window-plugin-closer{position: absolute;width:36px;height: 36px;top: 15px;right: 15px;cursor: pointer;background-image: url('http://www.ajie18.top/images/closer.png');background-position: center center;background-repeat: no-repeat;}
-
 /*弹窗结束*/
 
 /**交互*/
@@ -35,6 +37,15 @@
 .slide-win-mask{position: fixed;top:0;left: 0;width: 100%;height: 100%;background-color: rgb(0,0,0);display: none;z-index: 1000}
 .slide-win-dialog{transition: transform .3s ease-in-out;  position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: #fff;z-index: 1001;overflow-y: scroll;-webkit-overflow-scrolling: touch;}
 .slide-win-dialog:after{min-height: calc(100% +1px)}
+
+/**modal对话框*/
+.modal-win-dialog{width: 85%;max-width: 450px;padding:15px;position: fixed;top:0;left:0;background: #fff;z-index: 1900}
+.modal-win-title{width: 100%;padding: 10px 0;text-align: center;font-size: 16px;font-weight: 600;}
+.modal-win-content-wrap{}
+.modal-win-button{padding: 10px 0;display: flex;}
+.modal-win-confirm-btn{border-right: 1px solid #eee;color: #008000;}
+.modal-win-confirm-btn,.modal-win-cancel-btn{flex: 1;text-align: center;}
+
 /*动画*/
 .modal-dialog-show{animation: modal_dialog_show  .2s linear;}
 .modal-background-hide{animation: modal_background_hide .2s ease-in-out;animation-fill-mode: both; }

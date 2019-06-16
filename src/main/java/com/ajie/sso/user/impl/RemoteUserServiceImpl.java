@@ -426,4 +426,9 @@ public class RemoteUserServiceImpl implements UserService {
 	public void logout(HttpServletRequest request, HttpServletResponse response) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public boolean lock(TbUser user) throws UserException {
+		throw new UnsupportedOperationException();
+	}
 }

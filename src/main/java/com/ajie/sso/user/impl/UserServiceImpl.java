@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import com.ajie.chilli.cache.redis.RedisClient;
 import com.ajie.chilli.cache.redis.RedisException;
+import com.ajie.chilli.common.MarkSupport;
+import com.ajie.chilli.common.MarkVo;
 import com.ajie.chilli.common.enums.SexEnum;
 import com.ajie.chilli.support.TimingTask;
 import com.ajie.chilli.support.Worker;
@@ -44,7 +46,7 @@ import com.ajie.web.utils.CookieUtils;
  *
  */
 @Service(value = "userService")
-public class UserServiceImpl implements UserService, Worker {
+public class UserServiceImpl implements UserService, Worker, MarkSupport {
 	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
 	/**
@@ -138,22 +140,22 @@ public class UserServiceImpl implements UserService, Worker {
 		if (StringUtils.isEmpty(newpw))
 			throw new UserException("密码不允许为空");
 		if (operator.getId() != user.getId() && !RoleUtils.isAdmin(operator))
-			throw new UserException("无修改全选");
+			throw new UserException("无修改权限");
 		// user一般为redis保存的登录用户，redis不保存密码，所以需要到数据库查询出来再更新，而且这样的数据更准确
 		user = getUserById(user.getId());
 		if (null == user) {
 			// 难道被其他线程删除了，可能是管理员刚刚删除了吧
 			throw new UserException("用户不存在");
 		}
-		if (!user.contrastPassword(newpw = Toolkits.md5Password(oldpd)))
+		if (!user.contrastPassword(Toolkits.md5Password(oldpd)))
 			throw new UserException("原密码错误");
 		TbUser u = new TbUser();
 		u.setId(user.getId());
-		u.setPassword(newpw);
+		u.setPassword(Toolkits.md5Password(newpw));
 		updatePart(u);
 		if (user.getId() != operator.getId())
 			logger.info(operator + "修改了" + user + "密码");
-		// 清楚登录信息
+		// 清除登录信息
 		String token = getToken(request);
 		/*if (null == token)
 			return;*/// 应该不会发生这种是吧？控制器还能拿到token的user呢
@@ -187,6 +189,10 @@ public class UserServiceImpl implements UserService, Worker {
 		if (!user.contrastPassword(password)) {
 			throw new UserException("密码错误");
 		}
+		MarkVo mark = getMarkVo(user.getMark());
+		// 标志在线状态
+		mark.setMark(LOGIN_STATE_ONLINE.getId());
+		user.setMark(mark.getMark());
 		String randkey = Toolkits.genRandomStr(32);
 		boolean issuc = false;
 		try {
@@ -390,5 +396,24 @@ public class UserServiceImpl implements UserService, Worker {
 	@Override
 	public void work() {
 		getRedisUser().work();
+	}
+
+	@Override
+	public boolean lock(TbUser user) throws UserException {
+		if (null == user || user.getId() == 0)
+			throw new UserException("用户不存在");
+		// 防止传入的user修改了其他的字段，这方法只会更新状态字段
+		TbUser u = new TbUser();
+		u.setId(user.getId());
+		MarkVo mark = getMarkVo(user.getMark());
+		mark.setMark(STATE_LOCK.getId());
+		u.setMark(mark.getMark());
+		updatePart(u);
+		return true;
+	}
+
+	@Override
+	public MarkVo getMarkVo(int mark) {
+		return new MarkVo(mark);
 	}
 }

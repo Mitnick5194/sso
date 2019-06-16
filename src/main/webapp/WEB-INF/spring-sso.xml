@@ -20,11 +20,11 @@
 		<property name="userService" ref="userService" />
 		<property name="encoding" value="utf-8" />
 		<property name="mode" value="intercept" />
-		<property name="uriList">
+		<!-- <property name="uriList">
 			<list>
 				<value>/sso/userinfo.do</value>
 			</list>
-		</property>
+		</property> -->
 		<property name="ssoHost" value="${sso-host}" />
 	</bean>
 

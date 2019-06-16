@@ -4,6 +4,31 @@
 		getVerifykey();
 	})
 	
+	var selectBar = $("#iSelectBar");
+	var slider = SliderFactory.createSlider(iForms,iForms,{
+		autoCtrl: true,
+		pageCount: 2,
+		animateDuration:"0.2",//动画过渡时间
+		animateType: "ease",//过渡效果
+	}).success(function(ret,wrap,pageInfo){
+		handleSelectBar(pageInfo);
+	}).move(function(ret,wrap,pageInfo){
+		var left = (-(ret.distX)) / 2;//因为选择导航占屏幕的一半，所以要除以2
+		selectBar.css({
+			left:left
+		})
+	}).recovery(function(ret,wrap,pageInfo){
+		handleSelectBar(pageInfo);
+	});
+	
+	function handleSelectBar(pageInfo){
+		var idx = Math.abs(pageInfo.getIdx()) || 0;
+		var left = 50 * idx;
+		selectBar.css({
+			left: left+"%"
+		})
+	}
+	
 	$(".submitBtn").on("click" , function(){
 		var url = "dologin.do";
 		var _this  = $(this);
@@ -82,24 +107,26 @@
 	
 	$(".navBar").on("click","div" , function(){
 		var _this = $(this);
-		if(_this.hasClass("active")){
-			return;
-		}
-		_this.siblings("div").removeClass("active");
-		_this.addClass("active");
 		var type = _this.attr("data-type");
 		if(type == "login"){
+			selectBar.css("left",0);
 			$(".form-group").css("transform","translateX(0%)")
+			slider.setPageIdx(0,-1);
 		}else{
 			$(".form-group").css("transform","translateX(-50%)")
+			selectBar.css("left","50%");
+			slider.setPageIdx(-1,-1);
 		}
 	});
 	
-	$(".verifyImg").on("click",function(){
+	$("#iRegisterForm").on("click",".verifyImg",function(){
 		getVerifykey();
 	})
 	
-	function getVerifykey(callback){
+	function getVerifykey(){
+		var ele = $("#iRegisterForm").find(".verifyImg");
+		var p = ele.parent();
+		ele.remove();
 		$.ajax({
 			type: 'get',
 			url: 'getverifykey.do',
@@ -108,7 +135,7 @@
 			},
 			success: function(data){
 				verifyKey = data.key;
-				$(".verifyImg").attr("src","getvertifycode.do?key="+data.key);
+				p.html("<img class='verifyImg' src='getvertifycode.do?key="+verifyKey+"'>");
 			}
 		})
 	}

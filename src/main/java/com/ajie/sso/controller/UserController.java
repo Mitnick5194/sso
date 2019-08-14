@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -32,6 +33,7 @@ import com.ajie.sso.controller.vo.UserVo;
 import com.ajie.sso.user.UserService;
 import com.ajie.sso.user.exception.UserException;
 import com.ajie.web.XssDefenseRequest;
+import com.ajie.web.utils.CookieUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
@@ -42,7 +44,8 @@ import com.alibaba.fastjson.JSONObject;
  */
 @Controller
 public class UserController {
-	public static final Logger logger = LoggerFactory.getLogger(UserController.class);
+	public static final Logger logger = LoggerFactory
+			.getLogger(UserController.class);
 	@Resource
 	private UserService userService;
 
@@ -56,6 +59,16 @@ public class UserController {
 	private String stopCommand;
 	@Resource
 	private String admin;
+
+	/** 博客系统链接 */
+	@Resource(name = "blogUrl")
+	private String blogUrl;
+	
+	/** 内网映射博客系统链接 */
+	@Resource(name = "mappingBlog")
+	private String mappingBlog;
+	
+	private static String  prefix = "sso/";
 
 	/**
 	 * 关闭服务器
@@ -86,12 +99,20 @@ public class UserController {
 	 * @param request
 	 * @param response
 	 * @return
+	 * @throws IOException
 	 */
 	@RequestMapping("/login")
-	public String gotologin(HttpServletRequest request, HttpServletResponse response) {
+	public String gotologin(HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
+		TbUser user = userService.getUser(request);
+		if (null != user) {
+			// 已经登录过了，跳转到详情页
+			response.sendRedirect("userinfo?id=" + user.getId());
+			return null;
+		}
 		String ref = request.getParameter("ref");
 		request.setAttribute("ref", ref);
-		return "login";
+		return prefix+"login";
 	}
 
 	/**
@@ -102,16 +123,18 @@ public class UserController {
 	 * @return
 	 */
 	@RequestMapping("/userinfo")
-	public String userinfo(HttpServletRequest request, HttpServletResponse response) {
+	public String userinfo(HttpServletRequest request,
+			HttpServletResponse response) {
 		TbUser user = userService.getUser(request);
 		String id = request.getParameter("id");
 		if (null == user) {
 			request.setAttribute("isSelf", false);
 		} else {
-			request.setAttribute("isSelf", StringUtils.eq(id, String.valueOf(user.getId())));
+			request.setAttribute("isSelf",
+					StringUtils.eq(id, String.valueOf(user.getId())));
 		}
 		request.setAttribute("id", id);
-		return "userinfo";
+		return prefix+"userinfo";
 	}
 
 	/**
@@ -135,11 +158,13 @@ public class UserController {
 	 */
 	@ResponseBody
 	@RequestMapping("/register")
-	public Object register(HttpServletRequest request, HttpServletResponse response) {
+	public Object register(HttpServletRequest request,
+			HttpServletResponse response) {
 		String name = request.getParameter("key");
 		if (StringUtils.isSpecialChar(name)) {
 			// 用户名包含特殊字符，不允许
-			return ResponseResult.newResult(ResponseResult.CODE_ERR, "用户名不能包含特殊字符:" + name);
+			return ResponseResult.newResult(ResponseResult.CODE_ERR,
+					"用户名不能包含特殊字符:" + name);
 		}
 		String password = request.getParameter("password");
 		String vertify = request.getParameter("verifycode"); // 验证码
@@ -149,19 +174,24 @@ public class UserController {
 		ResponseResult result = null;
 		if (null == vertify)
 			return ResponseResult.newResult(ResponseResult.CODE_ERR, "验证码为空");
-		String cacheVertify = redisClient.get(VerifyImage.CACHE_PREFIX + vertifyKey);
+		String cacheVertify = redisClient.get(VerifyImage.CACHE_PREFIX
+				+ vertifyKey);
 		if (!StringUtils.eq(vertify, cacheVertify))
 			return ResponseResult.newResult(ResponseResult.CODE_ERR, "验证码错误");
 		try {
-			TbUser user = userService.register(name, password, request, response);
+			TbUser user = userService.register(name, password, request,
+					response);
 			if (isRemote(request)) {
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC,
+						user.getToken(), user);
 			} else {
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user, user));
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC,
+						new UserVo(user, user));
 			}
 		} catch (UserException e) {
 			logger.error("用户注册失败", e);
-			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+			result = ResponseResult.newResult(ResponseResult.CODE_ERR,
+					e.getMessage());
 		} catch (RuntimeException e) {
 			logger.error("用户注册失败", e);
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR, "注册失败");
@@ -183,13 +213,15 @@ public class UserController {
 	 */
 	@ResponseBody
 	@RequestMapping("/verifyusername")
-	public Object verifyusername(HttpServletRequest request, HttpServletResponse response) {
+	public Object verifyusername(HttpServletRequest request,
+			HttpServletResponse response) {
 		String name = request.getParameter("name");
 		String callback = request.getParameter("callback");// jsonp回调
 		ResponseResult result = null;
 		TbUser user = userService.getUserByName(name);
 		if (null != user) {
-			result = ResponseResult.newResult(ResponseResult.CODE_ERR, "用户名已存在");
+			result = ResponseResult
+					.newResult(ResponseResult.CODE_ERR, "用户名已存在");
 		} else {
 			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null);
 		}
@@ -202,36 +234,40 @@ public class UserController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value="/dologin",method = RequestMethod.POST)
-	public Object dologin(HttpServletRequest request, HttpServletResponse response)
-			throws IOException {
+	@RequestMapping(value = "/dologin", method = RequestMethod.POST)
+	public Object dologin(HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
 		String key = request.getParameter("key");
 		String password = request.getParameter("password");
 		String callback = request.getParameter("callback");
-		String method = request.getMethod();
-		System.out.println(method);
 		ResponseResult result = null;
 		try {
 			TbUser user = userService.login(key, password, request, response);
 			if (isRemote(request)) {
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC,
+						user.getToken(), user);
 			} else {
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user, user));
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC,
+						new UserVo(user, user));
 			}
 		} catch (UserException e) {
-			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+			result = ResponseResult.newResult(ResponseResult.CODE_ERR,
+					e.getMessage());
 		}
 		if (null == callback) {
-			response.addHeader("Access-Control-Allow-Origin", "http://localhost:8080");
+			response.addHeader("Access-Control-Allow-Origin",
+					"http://localhost:8080");
 			response.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
-			response.addHeader("Access-Control-Allow-Headers", "X-Custom-Header");
+			response.addHeader("Access-Control-Allow-Headers",
+					"X-Custom-Header");
 			return result;
 		}
 		// 不知原因，使用MappingJacksonValue转换的结果不是jsonp格式，可能是fastjson的问题，以后再深究
-		/*MappingJacksonValue jsonp = new MappingJacksonValue(obj);
-		jsonp.setJsonpFunction("callback");
-		String fun = jsonp.getJsonpFunction();
-		System.out.println(fun);*/
+		/*
+		 * MappingJacksonValue jsonp = new MappingJacksonValue(obj);
+		 * jsonp.setJsonpFunction("callback"); String fun =
+		 * jsonp.getJsonpFunction(); System.out.println(fun);
+		 */
 		String jsonp = ResponseResult.toJsonp(result, "callback");
 		PrintWriter out = response.getWriter();
 		out.write(jsonp);
@@ -241,7 +277,8 @@ public class UserController {
 
 	@ResponseBody
 	@RequestMapping("/getuserbyid")
-	public ResponseResult getuserbyid(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseResult getuserbyid(HttpServletRequest request,
+			HttpServletResponse response) {
 		TbUser operator = userService.getUser(request);
 		int id = Toolkits.toInt(request.getParameter("id"), 0);
 		ResponseResult result = null;
@@ -249,27 +286,37 @@ public class UserController {
 		if (null == user) {
 			result = ResponseResult.newResult(ResponseResult.CODE_SUC, "用户不存在");
 		} else if (isRemote(request)) {
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null,/*user.getToken()*/
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null,/*
+																			 * user.
+																			 * getToken
+																			 * (
+																			 * )
+																			 */
 					user);
 		} else {
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, new UserVo(user, operator));
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC,
+					new UserVo(user, operator));
 		}
 		return result;
 	}
 
 	@ResponseBody
-	@RequestMapping("/loginbytoken")
-	public ResponseResult loginbytoken(HttpServletRequest request, HttpServletResponse response) {
+	@RequestMapping("/getuserbytoken")
+	public ResponseResult getuserbytoken(HttpServletRequest request,
+			HttpServletResponse response) {
 		String token = request.getParameter(UserService.REQUEST_TOKEN_KEY);
 		ResponseResult result = null;
 		try {
 			TbUser user = userService.getUserByToken(token);
 			if (null != user)
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC, user.getToken(), user);
+				result = ResponseResult.newResult(ResponseResult.CODE_SUC,
+						user.getToken(), user);
 			else
-				result = ResponseResult.newResult(ResponseResult.CODE_SUC, null);
+				result = ResponseResult
+						.newResult(ResponseResult.CODE_SUC, null);
 		} catch (UserException e) {
-			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+			result = ResponseResult.newResult(ResponseResult.CODE_ERR,
+					e.getMessage());
 		}
 		return result;
 	}
@@ -283,8 +330,30 @@ public class UserController {
 	 */
 	@ResponseBody
 	@RequestMapping("/logout")
-	public ResponseResult logout(HttpServletRequest request, HttpServletResponse response) {
-		userService.logout(request, response);
+	public ResponseResult logout(HttpServletRequest request,
+			HttpServletResponse response) {
+		String token = null;
+		String header = request
+				.getHeader(UserService.REMOTE_SERVER_INVOKE_HEADER_KEY);
+		if (null == header) {
+			// 本地退出
+			Cookie[] cookies = request.getCookies();
+			if (null == cookies) {
+				ResponseResult.newResult(ResponseResult.CODE_SUC, "退出成功");
+			}
+
+			for (Cookie cookie : cookies) {
+				String name = cookie.getName();
+				if (UserService.COOKIE_KEY.equals(name)) {
+					token = cookie.getValue();
+				}
+			}
+		} else {
+			token = request.getParameter("token");
+		}
+		userService.logoutByToken(token);
+		CookieUtils.setCookie(request, response, UserService.COOKIE_KEY, token,
+				0);
 		return ResponseResult.newResult(ResponseResult.CODE_SUC, "退出成功");
 	}
 
@@ -297,10 +366,12 @@ public class UserController {
 	 */
 	@ResponseBody
 	@RequestMapping("/updateuser")
-	public ResponseResult updateuser(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseResult updateuser(HttpServletRequest request,
+			HttpServletResponse response) {
 		TbUser user = userService.getUser(request);
 		if (null == user) {
-			return ResponseResult.newResult(ResponseResult.CODE_ERR, "会话过期，请重新登录");
+			return ResponseResult.newResult(ResponseResult.CODE_ERR,
+					"会话过期，请重新登录");
 		}
 		request = XssDefenseRequest.toXssDefenseRequest(request);
 		String type = request.getParameter("type");
@@ -326,17 +397,21 @@ public class UserController {
 			String oldpw = value;
 			String newpw = request.getParameter("password");
 			try {
-				userService.modifyPassword(user, oldpw, newpw, user, request, response);
-				return ResponseResult.newResult(ResponseResult.CODE_SUC, "退出成功");
+				userService.modifyPassword(user, oldpw, newpw, user, request,
+						response);
+				return ResponseResult
+						.newResult(ResponseResult.CODE_SUC, "退出成功");
 			} catch (UserException e) {
-				return ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+				return ResponseResult.newResult(ResponseResult.CODE_ERR,
+						e.getMessage());
 			}
 		}
 		try {
 			userService.updatePart(u);
 		} catch (UserException e) {
 			logger.error("修改用户资料错误", e);
-			return ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+			return ResponseResult.newResult(ResponseResult.CODE_ERR,
+					e.getMessage());
 		}
 		return ResponseResult.newResult(ResponseResult.CODE_SUC, "退出成功");
 	}
@@ -350,7 +425,8 @@ public class UserController {
 	 */
 	@ResponseBody
 	@RequestMapping("/getsexenum")
-	public ResponseResult getsexenum(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseResult getsexenum(HttpServletRequest request,
+			HttpServletResponse response) {
 		JSONArray arr = new JSONArray();
 		JSONObject obj = new JSONObject();
 		obj.put("id", SexEnum.male.getId());
@@ -374,8 +450,9 @@ public class UserController {
 	 * @param response
 	 * @throws IOException
 	 */
-	@RequestMapping("/getverifykey.do")
-	void getverifykey(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	@RequestMapping("/getverifykey")
+	void getverifykey(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
 		setAjaxContentType(response);
 		PrintWriter writer = response.getWriter();
 		String key = request.getParameter("key");
@@ -406,7 +483,7 @@ public class UserController {
 	 * @param response
 	 * @throws IOException
 	 */
-	@RequestMapping("/getvertifycode.do")
+	@RequestMapping("/getvertifycode")
 	void getvertifycode(HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
 		OutputStream out = response.getOutputStream();
@@ -423,6 +500,27 @@ public class UserController {
 		}
 	}
 
+	/**
+	 * 获取博客系统的链接
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@ResponseBody
+	@RequestMapping("getblogurl")
+	ResponseResult getblogurl(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		setAjaxContentType(response);
+		String host = request.getHeader("host");
+		String url = blogUrl;
+		if (host.indexOf("j-") > -1) {
+			// 走了代理映射
+			url = mappingBlog;
+		}
+		return ResponseResult.success(url);
+	}
+
 	private void setAjaxContentType(HttpServletResponse response) {
 		response.setContentType("application/json;charset=UTF-8");
 		response.setCharacterEncoding("utf-8");
@@ -432,16 +530,19 @@ public class UserController {
 
 	@ResponseBody
 	@RequestMapping("/remotelogin")
-	public ResponseResult remotelogin(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseResult remotelogin(HttpServletRequest request,
+			HttpServletResponse response) {
 		String key = request.getParameter("key");
 		String password = request.getParameter("password");
 		ResponseResult result = null;
 		try {
-			TbUser user = remoteUserService.login(key, password, request, response);
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null/*user.getToken()*/,
-					user);
+			TbUser user = remoteUserService.login(key, password, request,
+					response);
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC,
+					null/* user.getToken() */, user);
 		} catch (UserException e) {
-			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+			result = ResponseResult.newResult(ResponseResult.CODE_ERR,
+					e.getMessage());
 		}
 		return result;
 	}
@@ -454,17 +555,20 @@ public class UserController {
 		ResponseResult result = null;
 		try {
 			TbUser user = remoteUserService.getUserByToken(token);
-			result = ResponseResult.newResult(ResponseResult.CODE_SUC, null/*user.getToken()*/,
-					user);
+			result = ResponseResult.newResult(ResponseResult.CODE_SUC,
+					null/* user.getToken() */, user);
 		} catch (UserException e) {
-			result = ResponseResult.newResult(ResponseResult.CODE_ERR, e.getMessage());
+			result = ResponseResult.newResult(ResponseResult.CODE_ERR,
+					e.getMessage());
 		}
 		return result;
 	}
 
 	private boolean isRemote(HttpServletRequest request) {
-		String header = request.getHeader(UserService.REMOTE_SERVER_INVOKE_KEY);
-		if (StringUtils.eq(header, UserService.REMOTE_SERVER_INVOKE_TOKEN))
+		String header = request
+				.getHeader(UserService.REMOTE_SERVER_INVOKE_HEADER_KEY);
+		if (StringUtils.eq(header,
+				UserService.REMOTE_SERVER_INVOKE_HEADER_VALUE))
 			return true;
 		return false;
 	}

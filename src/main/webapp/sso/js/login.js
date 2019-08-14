@@ -30,7 +30,7 @@
 	}
 	
 	$(".submitBtn").on("click" , function(){
-		var url = "dologin.do";
+		var url = "dologin";
 		var _this  = $(this);
 		var parent = _this.parent();
 		var name = $.trim(parent.find("input[name=key]").val());
@@ -39,7 +39,7 @@
 		var confirmPassword ;
 		var verifycode;
 		if(type == "register"){
-			url = "register.do";
+			url = "register";
 			confirmPassword = $.trim(parent.find("input[name=confirmPasswd]").val());
 			verifycode = $.trim(parent.find("input[name=vertifyCode]").val());
 		}
@@ -86,14 +86,17 @@
 				if(ref){
 					location.href = ref;
 				}else{
-					var host = location.host;
-					if(host.indexOf("ajie18")>-1){
-						location.href = "http://www.ajie18.top/blog/index.do";
-					}else{
-						location.href = "http://localhost:8080/blog/index.do";
-					}
+					$.ajax({
+						url: 'getblogurl',
+						success: function(data){
+							var url = data.msg;
+							if(!url.endsWith("/")){
+								url += "/";
+							}
+							location.href = url+"index"
+						}
+					})
 				}
-				
 			},
 			fail: function(e){
 				$.showToast(e);
@@ -129,13 +132,13 @@
 		ele.remove();
 		$.ajax({
 			type: 'get',
-			url: 'getverifykey.do',
+			url: 'getverifykey',
 			data: {
 				key:verifyKey
 			},
 			success: function(data){
 				verifyKey = data.key;
-				p.html("<img class='verifyImg' src='getvertifycode.do?key="+verifyKey+"'>");
+				p.html("<img class='verifyImg' src='getvertifycode?key="+verifyKey+"'>");
 			}
 		})
 	}
@@ -154,7 +157,7 @@ function verify(input){
 	}
 	$.ajax({
 		type: "post",
-		url: "verifyusername.do",
+		url: "verifyusername",
 		data:{
 			name:name,
 		},

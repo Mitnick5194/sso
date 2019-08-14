@@ -47,7 +47,8 @@ import com.ajie.web.utils.CookieUtils;
  */
 @Service(value = "userService")
 public class UserServiceImpl implements UserService, Worker, MarkSupport {
-	private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(UserServiceImpl.class);
 
 	/**
 	 * redis客户端服务
@@ -66,22 +67,20 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 	 */
 	protected List<Role> roles;
 
-	/** 用户默认头像路径 */
-	@Resource
-	private String userDefalutHeader;
 	/** 定时删除 redis登录信息 */
 	private RedisUser watch;
 
 	public UserServiceImpl() {
 		String ymd = TimeUtil.formatYMD(new Date());
 		// 每小时清除一次
-		TimingTask.createTimingTask("timing-del-login-info", this, TimeUtil.parse(ymd + " 00:00"),
-				60 * 60 * 1000);
+		TimingTask.createTimingTask("timing-del-login-info", this,
+				TimeUtil.parse(ymd + " 00:00"), 60 * 60 * 1000);
 	}
 
 	@Override
-	public TbUser register(String name, String passwd, HttpServletRequest request,
-			HttpServletResponse response) throws UserException {
+	public TbUser register(String name, String passwd,
+			HttpServletRequest request, HttpServletResponse response)
+			throws UserException {
 		if (null == name)
 			throw new UserException("注册失败，用户名为空");
 		if (null == passwd)
@@ -89,7 +88,6 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 		// 密码加密
 		String enc = Toolkits.md5Password(passwd);
 		TbUser user = new TbUser(name, enc);
-		user.setHeader(userDefalutHeader);
 		List<Role> roles = Collections.singletonList(Role._Nil);// TODO
 		user.setRoleids(JsonUtils.toJSONString(roles));
 		userMapper.insert(user);
@@ -131,8 +129,9 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 	}
 
 	@Override
-	public void modifyPassword(TbUser user, String oldpd, String newpw, TbUser operator,
-			HttpServletRequest request, HttpServletResponse response) throws UserException {
+	public void modifyPassword(TbUser user, String oldpd, String newpw,
+			TbUser operator, HttpServletRequest request,
+			HttpServletResponse response) throws UserException {
 		if (null == user || user.getId() == 0)
 			throw new UserException("找不到用户");
 		if (StringUtils.isEmpty(oldpd))
@@ -157,16 +156,18 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 			logger.info(operator + "修改了" + user + "密码");
 		// 清除登录信息
 		String token = getToken(request);
-		/*if (null == token)
-			return;*/// 应该不会发生这种是吧？控制器还能拿到token的user呢
+		/*
+		 * if (null == token) return;
+		 */// 应该不会发生这种是吧？控制器还能拿到token的user呢
 		RedisUser redisUser = getRedisUser();
 		redisUser.remove(token);
 		CookieUtils.setCookie(request, response, COOKIE_KEY, token, 0);
 	}
 
 	@Override
-	public TbUser login(String key, String password, HttpServletRequest request,
-			HttpServletResponse response) throws UserException {
+	public TbUser login(String key, String password,
+			HttpServletRequest request, HttpServletResponse response)
+			throws UserException {
 		if (null == key)
 			throw new UserException("用户名为空");
 		if (null == password)
@@ -226,6 +227,24 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 		}
 		CookieUtils.setCookie(request, response, COOKIE_KEY, key, 0);
 		getRedisUser().remove(key);// 删除缓存数据
+	}
+
+	@Override
+	public void logoutByToken(String token) {
+		if (null == token) {
+			return;
+		}
+		getRedisUser().remove(token);// 删除缓存数据
+		TbUser user = null;
+		try {
+			user = getUserByToken(token);
+		} catch (UserException e) {
+			logger.warn("redis获取用户异常，token:" + token, e);
+		}
+		if (null == user) {
+			return;
+		}
+		logger.info("注销登录：" + user.toString());
 	}
 
 	@Override
@@ -337,7 +356,8 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 	 * @param response
 	 * @param value
 	 */
-	private void setCookie(HttpServletRequest request, HttpServletResponse response, String value) {
+	private void setCookie(HttpServletRequest request,
+			HttpServletResponse response, String value) {
 		CookieUtils.setCookie(request, response, COOKIE_KEY, value);
 	}
 
@@ -380,10 +400,6 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 		long end = System.currentTimeMillis();
 		logger.info("已从配置文件中初始化了用户数据 , 耗时 " + (end - start) + " ms");
 
-	}
-
-	public void setUserDefaultHeader(String header) {
-		this.userDefalutHeader = header;
 	}
 
 	private RedisUser getRedisUser() {

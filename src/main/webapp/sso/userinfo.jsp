@@ -7,13 +7,13 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0,  maximum-scale=1.0" />
 <title>用户详情</title>
- <link href="${pageContext.request.contextPath }/${serverId }/css/global.css" rel="stylesheet" type="text/css">
- <link href="${pageContext.request.contextPath }/${serverId }/common/common.css" rel="stylesheet" type="text/css">
- <link href="${ pageContext.request.contextPath }/${serverId}/plugin/suspend-btn.css" rel="stylesheet" type="text/css">
+ <link href="${pageContext.request.contextPath }/css/global.css" rel="stylesheet" type="text/css">
+ <link href="${pageContext.request.contextPath }/common/common.css" rel="stylesheet" type="text/css">
+ <link href="${ pageContext.request.contextPath }/plugin/suspend-btn.css" rel="stylesheet" type="text/css">
 <style type="text/css">
 html{font-size:14px;height: 100%;}
 body{margin:0;padding:0;height: 100%}
-.header{background: url('./images/background.jpg') no-repeat;background-size: 100%; width: 100%;height: 180px;}
+.header{background: url(${ pageContext.request.contextPath }/images/background.jpg) no-repeat;background-size: 100%; width: 100%;height: 180px;}
 .header-info{position: absolute;top: 0;left: 0;width: 100%;height: 300px;height: 180px;}
 .header-img{width: 100%;text-align: center;margin-top: 20px;}
 .header-info>.user-name{font-size: 16px;margin-top: 5px;}
@@ -21,7 +21,7 @@ body{margin:0;padding:0;height: 100%}
 .header-info{width: 100%; text-align: center;color:#fff;}
 .blog-info{padding: 5px 0;}
 .synopsis{ white-space: nowrap;text-overflow: ellipsis;overflow: hidden;text-align: center;}
-.setting{top: 0;right: 0;width: 40px;height: 40px;position: absolute;background: url('./images/set.jpg') no-repeat;background-size: 85%; }
+.setting{top: 0;right: 0;width: 40px;height: 40px;position: absolute;background: url(${ pageContext.request.contextPath }/images/set.jpg) no-repeat;background-size: 85%; }
 .main{margin-top: 20px;width: 100%;overflow: hidden;}
 .nav{display: flex;}
 .nav>div{width: 100%;text-align: center;position: relative;padding: 5px 0;}
@@ -39,7 +39,7 @@ body{margin:0;padding:0;height: 100%}
 .setting-item{padding: 15px; border-bottom: 1px solid #eee;align-items: center;}
 .setting-item>img{width: 30px;height: 30px;border-radius: 50%;}
 .setting-item div:nth-child(1){width: 100%;flex: 1;white-space: nowrap;margin-right: 10px;}
-.arrow_right{background: url('${pageContext.request.contextPath }/${serverId }/images/arrow_right.jpg') no-repeat center right;}
+.arrow_right{background: url('${pageContext.request.contextPath }/images/arrow_right.jpg') no-repeat center right;}
 .arrow_right{background-size: 25px;}
 .setting-item-right{margin-right: 15px;    text-overflow: ellipsis;overflow: hidden;white-space: nowrap;}
 /* 博客内容 */
@@ -268,8 +268,8 @@ window.addEventListener("error" , function(e){
 	</div>
 	
 	<jsp:include page="/footer.jsp"></jsp:include>
-	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
-	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId}/common/common.js?t=2019"></script>
+	<script src="${ pageContext.request.contextPath }/js/jquery-1.9.1.js"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/common/common.js?t=2019"></script>
 	<script type="text/javascript">
 		//日志弹窗
 		var  logFrame = $("#iLogFrame").getWindow();
@@ -362,8 +362,8 @@ window.addEventListener("error" , function(e){
 		var serverId = "${serverId}";
 		
 	</script>
-	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/plugin/suspend-btn.js"></script>
-	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/global/suspend-btn-instance.js"></script>
-	<script src="${ pageContext.request.contextPath }/${serverId }/plugin/Slider.js?t=2019"></script>
-	<script src="js/userinfo.js"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/plugin/suspend-btn.js"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/js/suspend-btn-instance.js"></script>
+	<script src="${ pageContext.request.contextPath }/plugin/Slider.js?t=2019"></script>
+	<script src="${ pageContext.request.contextPath }/sso/js/userinfo.js"></script>
 </html>

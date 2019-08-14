@@ -32,10 +32,10 @@ public interface UserService {
 	/** 登录过期时间,单位秒 */
 	public final static int COOKIE_EXPIRE = 30 * 60;
 
-	/** 远程系统间调用识别的键，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
-	public final static String REMOTE_SERVER_INVOKE_KEY = "RSIK";
-	/** 远程系统间调用的识别值，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
-	public final static String REMOTE_SERVER_INVOKE_TOKEN = "RSIT";
+	/** 远程系统间调用头部键，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
+	public final static String REMOTE_SERVER_INVOKE_HEADER_KEY = "RSIK";
+	/** 远程系统间调用头部值，区别于前端调用，系统间调用可以传输用户的所有信息，前端调用需要过滤敏感信息 */
+	public final static String REMOTE_SERVER_INVOKE_HEADER_VALUE = "RSIT";
 
 	/** 登陆类型 -- 用户名登录 */
 	public final static KVpair LOGIN_TYPE_USERNAME = KVpair.valueOf("用户名", 1);
@@ -54,9 +54,11 @@ public interface UserService {
 	public final static KVpair STATE_LOCK = KVpair.valueOf("锁定", 1 << 3);
 
 	/** 登录状态 -- 在线 */
-	public final static KVpair LOGIN_STATE_ONLINE = KVpair.valueOf("在线", 1 << 20);
+	public final static KVpair LOGIN_STATE_ONLINE = KVpair.valueOf("在线",
+			1 << 20);
 	/** 登录状态 -- 离线 */
-	public final static KVpair LOGIN_STATE_OUTLINE = KVpair.valueOf("离线", 1 << 21);
+	public final static KVpair LOGIN_STATE_OUTLINE = KVpair.valueOf("离线",
+			1 << 21);
 
 	/**
 	 * 注册
@@ -105,8 +107,9 @@ public interface UserService {
 	 *            用作清楚登录缓存
 	 * @throws UserException
 	 */
-	void modifyPassword(TbUser user, String oldpw, String newpw, TbUser operator,
-			HttpServletRequest request, HttpServletResponse response) throws UserException;
+	void modifyPassword(TbUser user, String oldpw, String newpw,
+			TbUser operator, HttpServletRequest request,
+			HttpServletResponse response) throws UserException;
 
 	/**
 	 * 登录
@@ -124,8 +127,17 @@ public interface UserService {
 	 * @param key
 	 * @param password
 	 * @return
+	 * @Deprecated 使用logoutByToken
 	 */
+	@Deprecated
 	void logout(HttpServletRequest request, HttpServletResponse response);
+
+	/**
+	 * 注销登录，不关心请求域request和相应域response的处理，交与上层处理，
+	 * 
+	 * @param token
+	 */
+	void logoutByToken(String token);
 
 	/**
 	 * 使用token登录

@@ -27,7 +27,28 @@
 				obj[key] = value;
 			}
 		}
-	})()
+	})();
+	
+	var getBlogHost = (function(){
+		var host = null;
+		return function(biz){
+			if(host){
+				return host + biz;
+			}
+			$.ajax({
+				url: 'getblogurl',
+				async: false,//阻塞执行
+				success: function(data){
+					var url = data.msg;
+					if(!url.endsWith("/")){
+						url += "/";
+					}
+					host = url;
+				}
+			})
+			return host + biz;
+		}
+	})();
 	
 	getuser(id,function(data){
 		cache.set("user",data);
@@ -43,7 +64,7 @@
 	function getuser(id,callback){
 		$.ajax({
 			type: "post",
-			url: "getuserbyid.do",
+			url: "getuserbyid",
 			data:{
 				id:id,
 			},
@@ -108,7 +129,7 @@
 		}
 		var loading = $.showloading("加载中");
 		var host = location.host;
-		var url = getBlogHost("myblogs.do");
+		var url = getBlogHost("myblogs");
 		$.ajax({
 			type: 'post',
 			dataType: 'JSONP',
@@ -228,7 +249,7 @@
 	
 	$("#iBlogs").on("click" , ".item" , function(){
 		var id = $(this).attr("data-id");
-		location.href = "blog.do?id="+id;
+		location.href = "blog?id="+id;
 	})
 	
 	var settingLoad = false;//是否已经打开过，打开过就没有必要再设置信息了
@@ -334,7 +355,7 @@
 			var loading = $.showloading("正在加载");
 			$.ajax({
 				type: 'post',
-				url: 'getsexenum.do',
+				url: 'getsexenum',
 				success: function(data) {
 					if(data.code != 200){
 						$.showToast(data.msg);
@@ -445,7 +466,7 @@
 		$.showloading("正在修改");
 		$.ajax({
 			type: 'post',
-			url: 'updateuser.do',
+			url: 'updateuser',
 			data:obj,
 			success: function(data) {
 				if(data.code != 200){
@@ -492,7 +513,7 @@
 	$("#iLogoutBtn").on("click",function(){
 		$.ajax({
 			type: "post",
-			url: "logout.do",
+			url: "logout",
 			success: function(data){
 				if(data.code != 200){
 					$.showToast(data.msg);
@@ -502,19 +523,5 @@
 			}
 		})
 	})
-	
-	function getBlogHost(biz){
-		var host = location.host;
-		var url;
-		if(host.indexOf("localhost") > -1 ||host.indexOf("127.0") > -1 || host.indexOf("10.8") > -1){
-			url = "http://localhost:8080/blog/"+biz+".do";
-		}else if(serverId == 'xff'){
-			url = "http://www.ajie18.top/ajie/blog/"+biz+".do";
-		}
-		else{
-			url = "http://www.ajie18.top/blog/"+biz+".do";
-		}
-		return url;
-	}
 	
 })()

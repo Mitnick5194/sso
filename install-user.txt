@@ -1,3 +1,4 @@
+#通过安装可以任意指定名字
 mvn install:install-file -Dfile=D:\myworkspace\sso\target\user\sso-user-1.0.10.jar -DgroupId=com.ajie -DartifactId=sso-user -Dversion=1.0.10 -Dpackaging=jar
  
  #复制源码

@@ -7,8 +7,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0,  maximum-scale=1.0" />
 <title>登录</title>
- <link href="${pageContext.request.contextPath }/${serverId }/css/global.css" rel="stylesheet" type="text/css">
- <link href="${pageContext.request.contextPath }/${serverId }/common/common.css" rel="stylesheet" type="text/css">
+ <link href="${pageContext.request.contextPath }/css/global.css" rel="stylesheet" type="text/css">
+ <link href="${pageContext.request.contextPath }/common/common.css" rel="stylesheet" type="text/css">
  
 <style type="text/css">
 	input[type=text]{border:none}
@@ -34,7 +34,7 @@
 	.vertify-dv{display: flex;border: none !important;padding-left: 0;}
 	.vertify-input-dv{display: inline-block;width: calc(40% - 2px);width: -webkit-calc(40% - 2px); height: 45px;border: 1px solid #eee;}
 	.vertify-dv input{width:90%;height: 98%;padding: 0 5px;}
-	.vertify-image{width: 60%;text-align: right;height: 98%;    background: url(images/peding.gif)no-repeat;background-size: 80px 40px;background-position: right;}
+	.vertify-image{width: 60%;text-align: right;height: 98%;    background: url(/sso/images/peding.gif)no-repeat;background-size: 80px 40px;background-position: right;}
 	.vertify-image>img{border : 1px solid #888;height: 40px;width: 80px}
 	/* pc端 */
 	.pc-login-dv{padding: 30px;width: 90%;margin: 0 auto;display: none}
@@ -86,10 +86,10 @@
 		</div>
 	</body>
 	
-	<script src="http://www.ajie18.top/js/jquery-1.9.1.js"></script>
-	<script type="text/javascript" src="${ pageContext.request.contextPath }/${serverId }/common/common.js"></script>
-	<script src="${ pageContext.request.contextPath }/${serverId }/plugin/Slider.js?t=2019"></script>
-	<script src="${ pageContext.request.contextPath }/${serverId }/js/login.js"></script>
+	<script src="${ pageContext.request.contextPath }/js/jquery-1.9.1.js"></script>
+	<script type="text/javascript" src="${ pageContext.request.contextPath }/common/common.js"></script>
+	<script src="${ pageContext.request.contextPath }/plugin/Slider.js?t=2019"></script>
+	<script src="${ pageContext.request.contextPath }/sso/js/login.js"></script>
 	<script type="text/javascript">
 		var ref = $("#iRef").val();
 	</script>

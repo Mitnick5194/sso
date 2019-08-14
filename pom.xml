@@ -165,7 +165,8 @@
 						</goals>
 						<configuration>
 							<outputDirectory>D:\maven\repository\com\ajie\sso-user\1.0.10</outputDirectory>
-							<classifier>user-1.0.10-resource</classifier>
+							<!-- classifier会影响整个项目打包，运行安装命令mvn install后，项目打包到仓库名称是sso-1.0.10-user-1.0.10.jar（这是指sso，不是指sso-user） -->
+							<classifier>user-1.0.10-sources</classifier>
 							<includes>
 								<include>**/role/**</include>
 								<include>**/user/**</include>

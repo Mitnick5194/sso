@@ -64,8 +64,8 @@
 					<div id="iForms" class="form-group ">
 						<div class="login-form" id="iLoginForm">
 							<div class="key-dv"><input type="text" name="key" placeholder="用户名/手机号/邮箱"/></div>
-							<div class="passwd-dv"><input type="password" name="password" placeholder="密码"/></div>
-							<div id="iLoginBtn" class="login-btn submitBtn">登录</div>
+							<div class="passwd-dv"><input onmouseup="onEnter(this)" data-type="login" type="password" name="password" placeholder="密码"/></div>
+							<div class="login-btn submitBtn">登录</div>
 						</div>
 						<div class="register-form" id="iRegisterForm">
 							<div class="key-dv"><input type="text" name="key"  onblur="verify(this)" placeholder="请输入用户名"/></div>
@@ -74,11 +74,11 @@
 							<div class="passwd-dv"><input type="password" name="confirmPasswd" placeholder="确认密码"/></div>
 							<div class="vertify-dv">
 								<div class="vertify-input-dv">
-									<input type="text" name="vertifyCode" placeholder="验证码"/>
+									<input type="text" name="vertifyCode" onmouseup="onEnter(this)" data-type="register" placeholder="验证码"/>
 								</div>
 								<div class="vertify-image"><img class="verifyImg" src=""/></div>
 							</div>
-							<div data-type="register" id="iLoginBtn" class="login-btn submitBtn">注册</div>
+							<div data-type="register" class="login-btn submitBtn">注册</div>
 						</div>
 					</div>
 				</div>
@@ -92,6 +92,16 @@
 	<script src="${ pageContext.request.contextPath }/sso/js/login.js"></script>
 	<script type="text/javascript">
 		var ref = $("#iRef").val();
+		window.onEnter = function(e,code){
+			var _this = $(this);
+			console.log(arguments)
+			var type = _this.attr("data-type");
+			/* if(type == "login"){
+				$('#iLoginForm').find(".submitBtn").click();
+			}else{
+				$("#iRegisterForm").find(".submitBtn").click();
+			} */
+		}
 	</script>
 	
 </html>

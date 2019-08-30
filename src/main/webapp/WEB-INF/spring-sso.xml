@@ -64,5 +64,10 @@
 		<constructor-arg index="0" value="${blog-url}" />
 	</bean>
 	
+	<!-- 用户注册是默认使用的头像 -->
+	<bean class="java.lang.String" id="defaultUserHeader">
+		<constructor-arg index="0" value="${default_user_header}" />
+	</bean>
+	
 
 </beans>

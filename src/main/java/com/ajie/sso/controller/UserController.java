@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ajie.chilli.cache.redis.RedisClient;
@@ -63,12 +62,12 @@ public class UserController {
 	/** 博客系统链接 */
 	@Resource(name = "blogUrl")
 	private String blogUrl;
-	
+
 	/** 内网映射博客系统链接 */
 	@Resource(name = "mappingBlog")
 	private String mappingBlog;
-	
-	private static String  prefix = "sso/";
+
+	private static String prefix = "sso/";
 
 	/**
 	 * 关闭服务器
@@ -106,13 +105,16 @@ public class UserController {
 			HttpServletResponse response) throws IOException {
 		TbUser user = userService.getUser(request);
 		if (null != user) {
-			// 已经登录过了，跳转到详情页
-			response.sendRedirect("userinfo?id=" + user.getId());
+			// 已经登录过了，跳转到详情页或指定也
+			String ref = request.getParameter("ref");
+			if (null == ref) {
+				response.sendRedirect("userinfo?id=" + user.getId());
+			} else {
+				response.sendRedirect(ref);
+			}
 			return null;
 		}
-		String ref = request.getParameter("ref");
-		request.setAttribute("ref", ref);
-		return prefix+"login";
+		return prefix + "login";
 	}
 
 	/**
@@ -134,7 +136,7 @@ public class UserController {
 					StringUtils.eq(id, String.valueOf(user.getId())));
 		}
 		request.setAttribute("id", id);
-		return prefix+"userinfo";
+		return prefix + "userinfo";
 	}
 
 	/**
@@ -234,7 +236,7 @@ public class UserController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/dologin", method = RequestMethod.POST)
+	@RequestMapping(value = "/dologin")
 	public Object dologin(HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		String key = request.getParameter("key");
@@ -509,8 +511,8 @@ public class UserController {
 	 */
 	@ResponseBody
 	@RequestMapping("getblogurl")
-	ResponseResult getblogurl(HttpServletRequest request, HttpServletResponse response)
-			throws IOException {
+	ResponseResult getblogurl(HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
 		setAjaxContentType(response);
 		String host = request.getHeader("host");
 		String url = blogUrl;

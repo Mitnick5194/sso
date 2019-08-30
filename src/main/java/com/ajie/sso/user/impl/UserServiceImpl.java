@@ -62,6 +62,9 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 	@Resource
 	protected TbUserMapper userMapper;
 
+	@Resource(name = "defaultUserHeader")
+	protected String defaultUserHeader;
+
 	/**
 	 * 权限表
 	 */
@@ -88,6 +91,7 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 		// 密码加密
 		String enc = Toolkits.md5Password(passwd);
 		TbUser user = new TbUser(name, enc);
+		user.setHeader(defaultUserHeader);
 		List<Role> roles = Collections.singletonList(Role._Nil);// TODO
 		user.setRoleids(JsonUtils.toJSONString(roles));
 		userMapper.insert(user);

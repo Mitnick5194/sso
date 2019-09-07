@@ -143,6 +143,15 @@
 		})
 	}
 	
+	//监听回车
+	$(".enter").on("keyup",function(event){
+		var event = event || window.event;
+		var _this = $(this);
+		if(event.keyCode == 13){
+			_this.parents(".form").find(".submitBtn").click();
+		}
+	})
+	
 })()
 
 /**

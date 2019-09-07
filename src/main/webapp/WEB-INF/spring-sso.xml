@@ -14,24 +14,31 @@
 	<!-- 加载所有的配置文件 -->
 	<context:property-placeholder location="classpath:properties/*.properties" />
 
+	<!-- 集中线程池 -->
+	<bean class="com.ajie.chilli.thread.ThreadPool" id="threadPool">
+		<constructor-arg index="0" value="bolg-bg-thread-" />
+		<constructor-arg index="1" value="2" />
+		<constructor-arg index="2" value="30" />
+		<constructor-arg index="3" value="50" />
+		<property name="openSchdule" value="true" />
+		<property name="schedulePoolName" value="sso-schedule-thread-"></property>
+		<property name="scheduleMinSize" value="1" />
+		<property name="scheduleMaxSize" value="5" />
+	</bean>
 	<!-- 这个过滤器一定不能配在spring-mvc的spring文件中 -->
 	<bean id="requestFilter " class="com.ajie.web.RequestFilter">
-		<property name="serviceId" value="${serverId}" />
 		<property name="userService" ref="userService" />
 		<property name="encoding" value="utf-8" />
 		<property name="mode" value="intercept" />
-		<!-- <property name="uriList">
-			<list>
-				<value>/sso/userinfo.do</value>
-			</list>
-		</property> -->
+		<!-- <property name="uriList"> <list> <value>/sso/userinfo.do</value> </list> 
+			</property> -->
 		<property name="ssoHost" value="${sso-host}" />
 	</bean>
-	
+
 	<bean id="shutdownHook" class="com.ajie.chilli.support.ShutdownHook">
 		<constructor-arg index="0" value="thread-hook" />
 	</bean>
-	
+
 
 	<!-- 用户模块远程支持 -->
 	<bean id="remoteUserService" name="remoteUserService"
@@ -41,33 +48,33 @@
 
 	<context:component-scan base-package="com.ajie.sso.user" />
 	<context:annotation-config />
-	
+
 	<bean class="java.lang.String" id="stopCommand">
 		<constructor-arg index="0" value="${stop-command}" />
 	</bean>
 	<bean class="java.lang.String" id="admin">
 		<constructor-arg index="0" value="${admin-user-name}" />
 	</bean>
-	
+
 	<!-- sso系统内网映射链接 -->
 	<bean class="java.lang.String" id="mappingSso">
 		<constructor-arg index="0" value="${mapping-sso-url}" />
 	</bean>
-	
+
 	<!-- blog系统内网映射链接 -->
 	<bean class="java.lang.String" id="mappingBlog">
 		<constructor-arg index="0" value="${mapping-blog-url}" />
 	</bean>
-	
+
 	<!-- blog链接 -->
 	<bean class="java.lang.String" id="blogUrl">
 		<constructor-arg index="0" value="${blog-url}" />
 	</bean>
-	
+
 	<!-- 用户注册是默认使用的头像 -->
 	<bean class="java.lang.String" id="defaultUserHeader">
 		<constructor-arg index="0" value="${default_user_header}" />
 	</bean>
-	
+
 
 </beans>

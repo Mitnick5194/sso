@@ -23,7 +23,7 @@ import com.ajie.chilli.common.MarkVo;
 import com.ajie.chilli.common.enums.SexEnum;
 import com.ajie.chilli.support.TimingTask;
 import com.ajie.chilli.support.Worker;
-import com.ajie.chilli.utils.TimeUtil;
+import com.ajie.chilli.thread.ThreadPool;
 import com.ajie.chilli.utils.Toolkits;
 import com.ajie.chilli.utils.XmlHelper;
 import com.ajie.chilli.utils.common.JsonUtils;
@@ -64,6 +64,9 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 
 	@Resource(name = "defaultUserHeader")
 	protected String defaultUserHeader;
+	@Resource
+	/** 线程池 */
+	private ThreadPool threadPool;
 
 	/**
 	 * 权限表
@@ -74,10 +77,9 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 	private RedisUser watch;
 
 	public UserServiceImpl() {
-		String ymd = TimeUtil.formatYMD(new Date());
 		// 每小时清除一次
-		TimingTask.createTimingTask("timing-del-login-info", this,
-				TimeUtil.parse(ymd + " 00:00"), 60 * 60 * 1000);
+		TimingTask.createTimingTask(threadPool, "timing-del-login-info", this,
+				"00:00", 60 * 60 * 1000);
 	}
 
 	@Override

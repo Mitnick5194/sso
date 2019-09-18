@@ -35,16 +35,15 @@
 		<constructor-arg value="blog-crud" />
 	</bean>
 
-	<bean id="blogMessageComsumer" class="com.ajie.sso.user.impl.BlogMessageComsumer"></bean>
 
 	<!--配置消息容器 -->
-	<bean id="jmsContainer"
+<!-- 	<bean id="jmsContainer"
 		class="org.springframework.jms.listener.DefaultMessageListenerContainer">
-		<!--配置连接工厂 -->
+		配置连接工厂
 		<property name="connectionFactory" ref="connectionFactory" />
-		<!--配置监听的队列 -->
+		配置监听的队列
 		<property name="destination" ref="destination" />
-		<!--配置消息监听器 -->
+		配置消息监听器
 		<property name="messageListener" ref="blogMessageComsumer" />
-	</bean>
+	</bean> -->
 </beans>

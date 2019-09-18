@@ -53,8 +53,8 @@
 	getuser(id,function(data){
 		cache.set("user",data);
 		userinfo.find(".userName").html(data.nickname || data.name);
-		userinfo.find(".userHeader").attr("src",data.header);
-		userinfo.find(".synopsis").html("简介："+data.synopsis);
+		userinfo.find(".userHeader").attr("src",(data.header || "/sso/images/logo.jpg"));
+		userinfo.find(".synopsis").html("简介："+(data.synopsis || "未填写"));
 		var obj = {};
 		$.extend(obj,data);
 		obj.phone = "未公开";
@@ -94,6 +94,10 @@
 		var sb = [];
 		for(let i=0;i<blogs.length;i++){
 			var blog = blogs[i];
+			if(!blog.userHeader || !blog.userHeader.length){
+				//头像为空，使用默认头像
+				blog.userHeader = "/sso/images/default_user_header.jpg";
+			}
 			var labelsStr = blog.labels;
 			if(labelsStr){
 				var labels = labelsStr.split(",");

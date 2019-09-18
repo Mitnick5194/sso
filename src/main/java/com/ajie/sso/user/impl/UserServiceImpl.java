@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.dom4j.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -76,7 +77,9 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 	/** 定时删除 redis登录信息 */
 	private RedisUser watch;
 
-	public UserServiceImpl() {
+	@Autowired
+	public UserServiceImpl(ThreadPool pool) {
+		threadPool = pool;
 		// 每小时清除一次
 		TimingTask.createTimingTask(threadPool, "timing-del-login-info", this,
 				"00:00", 60 * 60 * 1000);

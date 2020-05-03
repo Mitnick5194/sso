@@ -441,4 +441,9 @@ public class UserServiceImpl implements UserService, Worker, MarkSupport {
 	public MarkVo getMarkVo(int mark) {
 		return new MarkVo(mark);
 	}
+	
+	public static void main(String[] args) {
+		String enc = Toolkits.md5Password("ajie2233");
+		System.out.println(enc);
+	}
 }

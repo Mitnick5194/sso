@@ -28,7 +28,7 @@ body{margin:0;padding:0;height: 100%}
 .nav .active:after{content: '';position: absolute;width: 50%;height: 2px;background: #337ab7;bottom: 1px;left:25%;}
 .nav div+div{border-left: 1px solid #bbb;}
 .article{display: flex;width: 300%;padding: 10px;transition: all .15s ease}
-.article>div{width: 100%;padding: 10px;}
+.article>div{width: 100%;padding: 10px;overflow: hidden}
 .blog{width: 100%; height: 300px;display: flex;align-items:center; justify-content: center;font-size: 18px;}
 .align-c{text-align: center;}
 .no-data{font-size: 16px; color: #888;height: 200px;}

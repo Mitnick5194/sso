@@ -243,18 +243,22 @@
 					var blogs = data ||[];
 					cache.set("draff",blogs);
 					var sb = handleBlogTemp(blogs);
-					$("#iDraft").html(sb.join(""));
+					if(!sb || sb.length == 0){
+						$("#iDraft").html("<div class='align-c no-data'>暂无数据</div>");
+					}else{
+						$("#iDraft").html(sb.join(""));
+					}
 				})
 			}
 			
 		}
 		
 	}
-	
+/*	
 	$("#iBlogs").on("click" , ".item" , function(){
 		var id = $(this).attr("data-id");
-		location.href = "blog?id="+id;
-	})
+		location.href = "blogdetail?id="+id;
+	})*/
 	
 	var settingLoad = false;//是否已经打开过，打开过就没有必要再设置信息了
 	$("#iSettingBtn").on("click",function(){
@@ -304,7 +308,7 @@
 	
 	$("#iBlogs").on("click","section",function(){
 		var id = $(this).attr("data-id");
-		location.href = getBlogHost("blog")+"?id="+id;
+		location.href = getBlogHost("blogdetail")+"?id="+id;
 	})
 	
 	$("#iDraft").on("click","section",function(){

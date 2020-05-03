@@ -253,6 +253,7 @@ public class UserController {
 						new UserVo(user, user));
 			}
 		} catch (UserException e) {
+			logger.error("登录失败", e);
 			result = ResponseResult.newResult(ResponseResult.CODE_ERR,
 					e.getMessage());
 		}

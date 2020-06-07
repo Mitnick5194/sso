@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.imaging.ImageFormats;
-import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -492,13 +491,14 @@ public class UserController {
 		OutputStream out = response.getOutputStream();
 		String key = request.getParameter("key");
 		String val = redisClient.get(VerifyImage.CACHE_PREFIX + key);
+		logger.info(key + "=>" + val);
 		if (null == val) {
 			return;
 		}
-		BufferedImage buffer = VerifyImage.getImage(val, 80, 45);
 		try {
+			BufferedImage buffer = VerifyImage.getImage(val, 80, 45);
 			Imaging.writeImage(buffer, out, ImageFormats.PNG, null);
-		} catch (ImageWriteException e) {
+		} catch (Throwable e) {
 			logger.error("生成无法写出页面", e);
 		}
 	}

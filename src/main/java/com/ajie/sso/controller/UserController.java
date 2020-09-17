@@ -19,6 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.ajie.chilli.cache.LruCache;
 import com.ajie.chilli.cache.redis.RedisClient;
 import com.ajie.chilli.cache.redis.RedisException;
 import com.ajie.chilli.common.ResponseResult;
@@ -575,4 +576,37 @@ public class UserController {
 			return true;
 		return false;
 	}
+	
+
+	LruCache<String, Object> cache = new  LruCache<>(Object.class);
+	cache.setTimeout(30*60));
+	@RequestMapping("/remotelogin")
+	public ResponseResult dosth(HttpServletRequest request,
+			HttpServletResponse response) {
+		JSONObject json = null;
+		if(null != (json=assertLogin(request)){
+			return json;
+		}
+	}
+	private JSONObject assertLogin(HttpServletRequest request){
+		Cookie[] cookies = request.getCookies();
+		String cacheKey = null;
+		for(Cookie c :cookies){
+			if(null == c){
+				continue;
+			}
+			if("u_key".equals(c.getName())){
+				cacheKey = c.getValue();
+			}
+		}
+		Object obj = cache.get(cacheKey);
+		if(null == obj){
+			JSONObject json = new JSONObject();
+			json.put("code", 123);
+			json.put("msg", "回话过期");
+			return json;
+		}
+		return null;
+}
+	
 }
